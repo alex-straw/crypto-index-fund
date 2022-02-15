@@ -1,2 +1,2 @@
-# FinTech-Group-Project
+# Backend repo for the FinTech Group Project
 Repo for our group project.
