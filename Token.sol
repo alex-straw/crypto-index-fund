@@ -6,16 +6,35 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract BasketCoin is ERC20 {
 
-    address[] tokensInBasket;
+    // struct Token = {
+    //     tokenName: "",
+    //     tokenPercentages: 50,
+    //     price: 10
+    // }
 
-    constructor(string memory name_, string memory symbol_, address[] memory tokensInBasket_) ERC20(name_, symbol_) {
-        
-        tokensInBasket = tokensInBasket_;
-        
-    }
+    address[] tokens;
+    uint256[] tokenPercentages;
+    uint256[] tokenPrices;
+
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address[] memory tokens_,
+        uint256[] memory tokenPercentages_) ERC20(name_, symbol_
+        ) 
+        {
+            require(tokens_.length == tokenPercentages_.length, "Please specify the same number of tokens and percentages");
+            require(sum(tokenPercentages_) == 100, "Percentage allocation must sum to 100");
+            tokens = tokens_;
+            tokenPercentages = tokenPercentages_;
+        }
 
     function getTokensInBasket() public view returns(address[] memory) {
-        return tokensInBasket;
+        return tokens;
+    }
+
+    function getPercentageAllocations() public view returns(uint256[] memory) {
+        return tokenPercentages;
     }
 
     // 1. Take Eth amount as input
@@ -26,12 +45,22 @@ contract BasketCoin is ERC20 {
     // 3. Calculate amount of each token in the basket to buy
     // 4. Buy those tokens and transfer them to the Vault
     // 5. Mint tokens based on Eth amount and token price
-    function issue(uint256 amountInEth) public {
-
-        uint256 basketTokensToMint = 1;
+    function issue(uint256 amountToMint) public {
         address newCoinHolder = msg.sender;
+        _mint(newCoinHolder, amountToMint);
+    }
 
-        _mint(newCoinHolder, basketTokensToMint);
+    function liquidate(uint256 amountToLiquidate) public {
+        address newCoinHolder = msg.sender;
+        _burn(newCoinHolder, amountToLiquidate);
+    }
+
+    function sum(uint256[] memory numbers) private pure returns(uint256) {
+        uint256 total = 0;
+        for (uint i=0; i<numbers.length; i++) {
+            total += numbers[i];
+        }
+        return total;
     }
 
 }
