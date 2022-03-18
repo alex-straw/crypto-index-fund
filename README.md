@@ -1,2 +1,3 @@
-# Backend repo for the FinTech Group Project
-Repo for our group project.
+# FinTech Group Project - Backend
+
+Backend for group 4 project: basket tokens.
