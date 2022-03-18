@@ -39,19 +39,8 @@ contract Vault {
         ERC20Map[id].tokenProxy = _tokenProxy;
         ERC20Map[id].proportionHoldings = _proportionHoldings;
         ERC20Map[id].tokenPrice = 0; // Default set to 0
-        ERC20Map[id].purchaseQtyPending = 0;
         id ++;
     }
-
-    // To issue new tokens, we need to know the following:
-    // 1. The amount (in Eth) that a user wants to spend on new tokens
-    // 2. The value of the underlying assets (i.e. the value of the vault)
-    //      - This must be determined using Chainlink price feeds and the quantity of ERC20 tokens in the vault
-    // 3. The number of BasketCoin tokens in supply before the issuance
-    // 
-    // The formula for the number of tokens to issue is then:
-    // TokensToIssue = SpendAmount / VaultValuePerBasketCoin
-    // Where VaultValuePerBasketCoin = VaultValue / BasketCoinSupply
 
     function issue(uint256 ethAmount) public returns(uint256) {
         // Determine value of underlying assets
@@ -64,21 +53,15 @@ contract Vault {
             // Add eth value of tokens together and record in TVL variable
             totalValueLocked += ERC20Map[id].tokenPrice * ERC20Map[id].vaultQuantity;
 
-            // Quantity of token that must be purchased
-            // Eth amount to spend * percentage.  Divide by the "TOKEN/ETH" ratio (e.g., LINK/ETH ~= 0.05)
-            ERC20Map[id].purchaseQtyPending = ethAmount * ERC20Map[id].proportionHoldings / (100*ERC20Map[id].tokenPrice);
+			uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
+			uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].tokenProxy);
 
-            // Buy tokens, send to vault
-            purchaseTokens(ERC20Map[id].tokenAddress, ERC20Map[id].tokenProxy, ERC20Map[id].purchaseQtyPending);
-
-            ERC20Map[id].vaultQuantity += ERC20Map[id].purchaseQtyPending; // Keeps track of amount of tokens held in vault
-            ERC20Map[id].purchaseQtyPending = 0; // Order completed.  Set pending orders for token 'id' to 0.
-
-            if (basketTokensMinted !=0) {
-                return getTokenIssueAmount(totalValueLocked, ethAmount, basketTokensMinted);
-            }
-            return 100;
+            ERC20Map[id].vaultQuantity += amtPurchased; // Keeps track of amount of tokens held in vault
         }
+		if (basketTokensMinted !=0) {
+            return getTokenIssueAmount(totalValueLocked, ethAmount, basketTokensMinted);
+        }
+		return 100;
     }
 
     function getTokenIssueAmount(uint256 _totalValueLocked, uint256 _ethAmount, uint256 _basketTokensMinted) private pure returns(uint256 issueQty) {
@@ -89,9 +72,10 @@ contract Vault {
         return 10;
     }
 
-    function purchaseTokens(address _tokenAddress, address _contractProxy, uint256 _quantity) private {
+    function swapTokens(address _tokenAddress, uint256 _ethToSwap, address _tokenProxy) private returns(uint256){
         // Purchase tokens on Uniswap
         // Send tokens to vault
+		return 10;
     }
 
     function withdraw() public {
