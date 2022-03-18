@@ -8,7 +8,7 @@ contract Vault {
         string ticker;
         uint256 vaultQuantity;
         address tokenAddress;  // if true, that person already voted
-        address tokenProxy; // For Price-Feeds https://kovan.etherscan.io/address/0x562C092bEb3a6DF77aDf0BB604F52c018E4f2814#internaltx
+        address uniswapProxy; // For Price-Feeds https://kovan.etherscan.io/address/0x562C092bEb3a6DF77aDf0BB604F52c018E4f2814#internaltx
         uint256 proportionHoldings;
         uint256 tokenPrice;
         uint256 purchaseQtyPending;
@@ -32,11 +32,11 @@ contract Vault {
 
     mapping(uint8 => ERC20) ERC20Map;
 
-    function addToBasket (string calldata _ticker, address _tokenAddress, address _tokenProxy, uint256 _proportionHoldings) external {
+    function addToBasket (string calldata _ticker, address _tokenAddress, address _uniswapProxy, uint256 _proportionHoldings) external {
         ERC20Map[id].ticker = _ticker;
         ERC20Map[id].vaultQuantity = 0; // Initial qty is always 0
         ERC20Map[id].tokenAddress = _tokenAddress;
-        ERC20Map[id].tokenProxy = _tokenProxy;
+        ERC20Map[id].uniswapProxy = _uniswapProxy;
         ERC20Map[id].proportionHoldings = _proportionHoldings;
         ERC20Map[id].tokenPrice = 0; // Default set to 0
         id ++;
@@ -47,35 +47,29 @@ contract Vault {
         uint256 totalValueLocked = 0; // Re-calculate TVL before issuing new tokens
 
         for (uint i=0; i< id; i++) {
-            // Store non-stale price feed value in struct
-            ERC20Map[id].tokenPrice = getPriceFeed(ERC20Map[id].tokenAddress);
+			uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
+			uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].uniswapProxy);
 
-            // Add eth value of tokens together and record in TVL variable
-            totalValueLocked += ERC20Map[id].tokenPrice * ERC20Map[id].vaultQuantity;
+			ERC20Map[id].tokenPrice = ethToSwap / amtPurchased;
+			ERC20Map[id].vaultQuantity += amtPurchased; // Keeps track of amount of tokens held in vault
 
-	    uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
-	    uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].tokenProxy);
-
-            ERC20Map[id].vaultQuantity += amtPurchased; // Keeps track of amount of tokens held in vault
+			// Add eth value of tokens together and record in TVL variable
+			totalValueLocked += ERC20Map[id].tokenPrice * ERC20Map[id].vaultQuantity;
         }
-	if (basketTokensMinted !=0) {
+		if (basketTokensMinted !=0) {
             return getTokenIssueAmount(totalValueLocked, ethAmount, basketTokensMinted);
         }
-	return 100;
+		return 100;
     }
 
     function getTokenIssueAmount(uint256 _totalValueLocked, uint256 _ethAmount, uint256 _basketTokensMinted) private pure returns(uint256 issueQty) {
         return issueQty = _ethAmount / (_totalValueLocked / _basketTokensMinted);
     }
 
-    function getPriceFeed(address token) private pure returns(uint256) {
-        return 10;
-    }
-
-    function swapTokens(address _tokenAddress, uint256 _ethToSwap, address _tokenProxy) private returns(uint256){
+    function swapTokens(address _tokenAddress, uint256 _ethToSwap, address _uniswapProxy) private returns(uint256){
         // Purchase tokens on Uniswap
         // Send tokens to vault
-	return 10;
+		return 10;
     }
 
     function withdraw() public {
