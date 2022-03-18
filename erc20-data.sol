@@ -53,15 +53,15 @@ contract Vault {
             // Add eth value of tokens together and record in TVL variable
             totalValueLocked += ERC20Map[id].tokenPrice * ERC20Map[id].vaultQuantity;
 
-			uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
-			uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].tokenProxy);
+	    uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
+	    uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].tokenProxy);
 
             ERC20Map[id].vaultQuantity += amtPurchased; // Keeps track of amount of tokens held in vault
         }
-		if (basketTokensMinted !=0) {
+	if (basketTokensMinted !=0) {
             return getTokenIssueAmount(totalValueLocked, ethAmount, basketTokensMinted);
         }
-		return 100;
+	return 100;
     }
 
     function getTokenIssueAmount(uint256 _totalValueLocked, uint256 _ethAmount, uint256 _basketTokensMinted) private pure returns(uint256 issueQty) {
@@ -75,7 +75,7 @@ contract Vault {
     function swapTokens(address _tokenAddress, uint256 _ethToSwap, address _tokenProxy) private returns(uint256){
         // Purchase tokens on Uniswap
         // Send tokens to vault
-		return 10;
+	return 10;
     }
 
     function withdraw() public {
