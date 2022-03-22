@@ -22,7 +22,7 @@ Please use it to test the *buy* and *sell* functions described below.
 
 Also, it is an ERC20 token, which means it has many other useful methods, such as balanceOf and totalSupply. 
 
-The ERC20 specification, with all the functions, can be found (here)[https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol].
+The ERC20 specification, with all the functions, can be found [here](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol).
 
 ## Core Functionality
 
