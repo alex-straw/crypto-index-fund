@@ -2,16 +2,17 @@
 
 pragma solidity ^0.8.7;
 
-contract Vault {
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-    struct ERC20 {
+contract Portfolio {
+
+    struct Token {
         string ticker;
         uint256 vaultQuantity;
         address tokenAddress;  // if true, that person already voted
         address uniswapProxy; // For Price-Feeds https://kovan.etherscan.io/address/0x562C092bEb3a6DF77aDf0BB604F52c018E4f2814#internaltx
         uint256 proportionHoldings;
         uint256 tokenPrice;
-        uint256 purchaseQtyPending;
     }
 
     uint8 id = 0;
@@ -30,7 +31,7 @@ contract Vault {
     // BAT / USD
     // "BAT", "0xDA5B056Cfb861282B4b59d29c9B395bcC238D29B", "0x031dB56e01f82f20803059331DC6bEe9b17F7fC9", 0
 
-    mapping(uint8 => ERC20) ERC20Map;
+    mapping(uint8 => Token) ERC20Map;
 
     function addToBasket (string calldata _ticker, address _tokenAddress, address _uniswapProxy, uint256 _proportionHoldings) external {
         ERC20Map[id].ticker = _ticker;
