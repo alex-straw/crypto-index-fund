@@ -5,7 +5,7 @@ pragma solidity ^0.8.7;
 // Needs to track which coins exist inside a portfolio
 // Needs to track who owns each of those coins
 
-contract Vault_v2 {
+contract Vault {
     // assets: Token address -> user address -> quantity owned 
     mapping(address => mapping(address => uint256)) private assets;
 
