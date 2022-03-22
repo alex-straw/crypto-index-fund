@@ -2,20 +2,26 @@
 
 pragma solidity ^0.8.7;
 
-contract Vault {
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./Vault_v2.sol";
 
-    struct ERC20 {
+
+contract Portfolio { 
+
+    struct Token {
         string ticker;
         uint256 vaultQuantity;
         address tokenAddress;  // if true, that person already voted
         address uniswapProxy; // For Price-Feeds https://kovan.etherscan.io/address/0x562C092bEb3a6DF77aDf0BB604F52c018E4f2814#internaltx
         uint256 proportionHoldings;
         uint256 tokenPrice;
-        uint256 purchaseQtyPending;
     }
 
     uint8 id = 0;
     uint256 basketTokensMinted = 0;
+    mapping(uint8 => Token) ERC20Map;
+    Vault_v2 vault;
+
 
     // https://rinkeby.etherscan.io/address/0x5eD8BD53B0c3fa3dEaBd345430B1A3a6A4e8BD7C --> Call Mint to get DAI
     // Price feeds are LINK/USD, BAT/USD
@@ -30,16 +36,20 @@ contract Vault {
     // BAT / USD
     // "BAT", "0xDA5B056Cfb861282B4b59d29c9B395bcC238D29B", "0x031dB56e01f82f20803059331DC6bEe9b17F7fC9", 0
 
-    mapping(uint8 => ERC20) ERC20Map;
+    constructor(address[] memory tokenAddresses) {
+        vault = new Vault_v2(tokenAddresses);
+    }
 
     function addToBasket (string calldata _ticker, address _tokenAddress, address _uniswapProxy, uint256 _proportionHoldings) external {
-        ERC20Map[id].ticker = _ticker;
-        ERC20Map[id].vaultQuantity = 0; // Initial qty is always 0
         ERC20Map[id].tokenAddress = _tokenAddress;
         ERC20Map[id].uniswapProxy = _uniswapProxy;
         ERC20Map[id].proportionHoldings = _proportionHoldings;
         ERC20Map[id].tokenPrice = 0; // Default set to 0
         id ++;
+    }
+
+    function getVaultAddress() public view returns(Vault_v2) {
+        return vault;
     }
 
     function issue(uint256 ethAmount) public returns(uint256) {
@@ -78,5 +88,5 @@ contract Vault {
     }
 
     receive() external payable {}
-    
+   
 }
