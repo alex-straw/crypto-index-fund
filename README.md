@@ -10,6 +10,20 @@ We have two smart contracts, one public and one private:
 2. Vault.sol
 3. PortfolioFactory.sol (not in MVP)
 
+## Test Portfolio
+
+We have deployed a Test Portfolio at the following address: 
+
+0x5F58DDAf12Ca3535356953a0a459Ab38A3e5796a
+
+It's super simple, containing only Eth!
+
+Please use it to test the *buy* and *sell* functions described below. 
+
+Also, it is an ERC20 token, which means it has many other useful methods, such as balanceOf and totalSupply. 
+
+The ERC20 specification, with all the functions, can be found (here)[https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol].
+
 ## Core Functionality
 
 ### 1. Creating a portfolio (not part of MVP)
@@ -41,7 +55,7 @@ First, you need the contract (portfolio) address.
 
 Send a transaction to the *buy* function, with Ether in msg.value. 
 
-The function will return the number of Folio coins successfully purchased. 
+The function doesn't return anything.
 
 
 ### 3. Sell position in existing portfolio
@@ -50,7 +64,7 @@ First, you need the contract (portfolio) address.
 
 Send a transaction to the *sell* function, and pass as argument the number of Folio coins to sell. 
 
-Returns the amount in Eth refunded.
+The function doesn't return anything.
 
 
 ## Additional Functionality
