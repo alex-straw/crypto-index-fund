@@ -15,12 +15,12 @@ contract TestPortfolio is ERC20 {
         ERC20(name_, symbol_)
     {
         ethToTokenRatio = 1000;
-        tokenAddresses[0] = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
-        percentageHoldings[0] = 100;
+        tokenAddresses.push(0xc778417E063141139Fce010982780140Aa0cD5Ab);
+        percentageHoldings.push(100);
         vault = new Vault(tokenAddresses);
     }
 
-    function buy() public payable returns (uint256) {
+    function buy() public payable {
         uint256 tokensToMint = msg.value * ethToTokenRatio;
         vault.deposit(
             0xc778417E063141139Fce010982780140Aa0cD5Ab,
@@ -28,10 +28,9 @@ contract TestPortfolio is ERC20 {
             msg.value
         );
         _mint(msg.sender, tokensToMint);
-        return (tokensToMint);
     }
 
-    function sell(uint256 tokensToSell) public returns (uint256) {
+    function sell(uint256 tokensToSell) public {
         uint256 ethToWithdraw = tokensToSell / ethToTokenRatio;
         vault.withdraw(
             0xc778417E063141139Fce010982780140Aa0cD5Ab,
@@ -39,6 +38,5 @@ contract TestPortfolio is ERC20 {
             ethToWithdraw
         );
         _burn(msg.sender, tokensToSell);
-        return (ethToWithdraw);
     }
 }

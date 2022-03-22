@@ -6,7 +6,7 @@ pragma solidity ^0.8.7;
 // Needs to track who owns each of those coins
 
 contract Vault {
-    // assets: Token address -> user address -> quantity owned 
+    // assets: Token address -> user address -> quantity owned
     mapping(address => mapping(address => uint256)) private assets;
 
     address portfolioAddress;
@@ -14,22 +14,33 @@ contract Vault {
     constructor(address[] memory tokenAddresses) {
         portfolioAddress = msg.sender;
 
-        for (uint256 i=0; i<tokenAddresses.length; i++) {
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
             assets[tokenAddresses[i]][portfolioAddress] = 0;
         }
     }
 
-    modifier isPortfolio {
+    modifier isPortfolio() {
         require(msg.sender == portfolioAddress);
         _;
     }
 
-    function deposit(address tokenAddress, address userAddress, uint256 amount) external isPortfolio {
+    function deposit(
+        address tokenAddress,
+        address userAddress,
+        uint256 amount
+    ) external isPortfolio {
         assets[tokenAddress][userAddress] += amount;
     }
 
-    function withdraw(address tokenAddress, address userAddress, uint256 amount) external isPortfolio {
-        require(assets[tokenAddress][userAddress] >= amount, "Insufficient funds");
+    function withdraw(
+        address tokenAddress,
+        address userAddress,
+        uint256 amount
+    ) external isPortfolio {
+        require(
+            assets[tokenAddress][userAddress] >= amount,
+            "Insufficient funds"
+        );
         assets[tokenAddress][userAddress] -= amount;
     }
 }
