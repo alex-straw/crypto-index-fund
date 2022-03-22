@@ -7,7 +7,7 @@ pragma solidity ^0.8.7;
 
 contract Vault_v2 {
     // assets: Token address -> user address -> quantity owned 
-    mapping(address => mapping(address => uint256)) public assets;
+    mapping(address => mapping(address => uint256)) private assets;
 
     address portfolioAddress;
 
