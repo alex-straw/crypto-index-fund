@@ -12,9 +12,9 @@ We have two smart contracts, one public and one private:
 
 ## Test Portfolio
 
-We have deployed a Test Portfolio at the following address: 
+We have deployed a Test Portfolio on the Rinkeby network at the following address: 
 
-0x5F58DDAf12Ca3535356953a0a459Ab38A3e5796a
+*0x5F58DDAf12Ca3535356953a0a459Ab38A3e5796a*
 
 It's super simple, containing only Eth!
 
