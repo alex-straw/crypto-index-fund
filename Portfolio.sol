@@ -3,7 +3,7 @@
 pragma solidity ^0.8.7;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./Vault_v2.sol";
+import "./Vault.sol";
 
 
 contract Portfolio { 
@@ -20,7 +20,7 @@ contract Portfolio {
     uint8 id = 0;
     uint256 basketTokensMinted = 0;
     mapping(uint8 => Token) ERC20Map;
-    Vault_v2 vault;
+    Vault vault;
 
 
     // https://rinkeby.etherscan.io/address/0x5eD8BD53B0c3fa3dEaBd345430B1A3a6A4e8BD7C --> Call Mint to get DAI
@@ -37,7 +37,7 @@ contract Portfolio {
     // "BAT", "0xDA5B056Cfb861282B4b59d29c9B395bcC238D29B", "0x031dB56e01f82f20803059331DC6bEe9b17F7fC9", 0
 
     constructor(address[] memory tokenAddresses) {
-        vault = new Vault_v2(tokenAddresses);
+        vault = new Vault(tokenAddresses);
     }
 
     function addToBasket (string calldata _ticker, address _tokenAddress, address _uniswapProxy, uint256 _proportionHoldings) external {
@@ -48,7 +48,7 @@ contract Portfolio {
         id ++;
     }
 
-    function getVaultAddress() public view returns(Vault_v2) {
+    function getVaultAddress() public view returns(Vault) {
         return vault;
     }
 
