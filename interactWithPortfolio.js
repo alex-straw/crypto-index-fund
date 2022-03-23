@@ -12,13 +12,13 @@ const mnemonicPhrase = "";
 const myWallet = ethers.Wallet.fromMnemonic(mnemonicPhrase);
 
 const testPortfolioAddress = "0x7157Ea1F87Cc4CbeE63137D3CB5ecBd44eE1960a";
-const deployedContract = new web3.eth.Contract(
+const testPortfolio = new web3.eth.Contract(
   testPortfolioABI,
   testPortfolioAddress
 );
 
 async function buy(ethAmountInWei) {
-  let setCall = deployedContract.methods.buy().encodeABI();
+  let setCall = testPortfolio.methods.buy().encodeABI();
   const tx = {
     from: myWallet.address,
     to: contractAddress,
@@ -35,7 +35,7 @@ async function buy(ethAmountInWei) {
 }
 
 async function sell(numFolioCoins) {
-  let setCall = deployedContract.methods.sell(numFolioCoins).encodeABI();
+  let setCall = testPortfolio.methods.sell(numFolioCoins).encodeABI();
   const tx = {
     from: myWallet.address,
     to: contractAddress,
