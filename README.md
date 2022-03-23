@@ -16,8 +16,7 @@ We have deployed a Test Portfolio on the Rinkeby network at the following addres
 
 *0x7157Ea1F87Cc4CbeE63137D3CB5ecBd44eE1960a*
 
-ERC20 : NAME = "Portfolio",
-      : TICKER = "FOLO"
+ERC20 : NAME = "Portfolio", TICKER = "FOLO"
 
 It's super simple, containing only Eth!
 
