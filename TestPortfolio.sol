@@ -7,9 +7,9 @@ import "./Vault.sol";
 
 contract TestPortfolio is ERC20 {
     Vault vault;
-    uint256 ethToTokenRatio;
-    address[] tokenAddresses;
-    uint256[] percentageHoldings;
+    uint256 public ethToTokenRatio;
+    address[] public tokenAddresses;
+    uint256[] public percentageHoldings;
 
     constructor(string memory name_, string memory symbol_)
         ERC20(name_, symbol_)
