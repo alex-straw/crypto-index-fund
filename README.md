@@ -14,7 +14,7 @@ We have two smart contracts, one public and one private:
 
 We have deployed a Test Portfolio on the Rinkeby network at the following address: 
 
-*0x5F58DDAf12Ca3535356953a0a459Ab38A3e5796a*
+*0x7157Ea1F87Cc4CbeE63137D3CB5ecBd44eE1960a*
 
 It's super simple, containing only Eth!
 
