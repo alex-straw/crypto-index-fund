@@ -18,11 +18,24 @@ contract TestPortfolio is ERC20 {
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_
     ) ERC20(name_, symbol_) {
+        // $10 worth of Eth 24/3/22
+        require(msg.value > 3268779871915400, "Creating a Portfolio requires more Eth");
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
         uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+     
+        // Buy the underlying tokens with the amount of Eth in msg.value
+        // First, convert Eth to Weth
+        // Then, work out the proportions of each underlying to buy, in Weth
+        // Then spend that Weth and get the underlying
+        // Send all these to the vault
+
+        _mint(msg.sender, 99);
+        _mint(vault.address, 1);
     }
+
+    function buyUnderlying() private
 
     function buy() public payable {
         uint256 tokensToMint = msg.value * ethToTokenRatio;
