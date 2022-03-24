@@ -39,10 +39,8 @@ The index of each of the following arrays should correspond to the same ERC20 to
 1. A list of token addresses. \
    Rules: Must be ERC20 smart contract addresses. Must be of length k. \
    Example: ["0xabc...","0xdef..."]
-2. A list of uniswap smart contract addresses corresponding to the above ETH/token swap. \
-   Rules: Must be of length k. 
-   Example: ["0xghi...","0xjkl..."]
-3. A list of percentage holdings of each of the specified tokens. 
+
+2. A list of percentage holdings of each of the specified tokens. 
    Rules: Must be of length k. Must sum to 100.
    Example: [20,20,50,10]
 
