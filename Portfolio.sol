@@ -5,12 +5,13 @@ pragma solidity ^0.8.7;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Vault.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
-contract TestPortfolio is ERC20 {
+contract Portfolio is ERC20 {
     Vault vault;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
-    ISwapRouter uniswapRouter;
+    ISwapRouter swapRouter;
     ERC20 WETH = ERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);
 
     constructor(
@@ -18,7 +19,7 @@ contract TestPortfolio is ERC20 {
         string memory symbol_,
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_
-    ) ERC20(name_, symbol_) {
+    ) payable ERC20(name_, symbol_) {
         // $10 worth of Eth 24/3/22
         // Would be cool to use Chainlink to work out what $10 worth of Eth is and ensure we get good price
         require(
@@ -28,18 +29,24 @@ contract TestPortfolio is ERC20 {
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+        swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
         // Buy the underlying tokens with the amount of Eth in msg.value
         // First, convert Eth to Weth
-        WETH.transfer(msg.value);
+        WETH.transfer(address(this), msg.value);
         uint256 wethBalance = WETH.balanceOf(address(this));
         // Loop through tokens to buy
-        for (i = 0; i < tokenAddresses_.length; i++) {
+        for (uint256 i = 0; i < tokenAddresses_.length; i++) {
             // Work out WETH to spend
-            wethToSpend = wethBalance * (percentageHoldings_[i] / 100);
+            uint256 wethToSpend = wethBalance * (percentageHoldings_[i] / 100);
             // Swap WETH for token and assign it to the vault
-            swapWethForToken(wethToSpend, tokenAddresses[i], address(vault));
+            uint256 tokenOutAmount = swapFromWeth(
+                wethToSpend,
+                tokenAddresses[i],
+                address(vault)
+            );
+            // Update vault
+            vault.deposit(tokenAddresses_[i], msg.sender, tokenOutAmount);
         }
         _mint(msg.sender, 99);
         _mint(address(vault), 1);
@@ -49,7 +56,7 @@ contract TestPortfolio is ERC20 {
         uint256 wethAmount,
         address tokenOut,
         address recipient
-    ) private {
+    ) private returns (uint256) {
         require(
             WETH.balanceOf(address(this)) >= wethAmount,
             "Insufficient funds"
@@ -70,26 +77,27 @@ contract TestPortfolio is ERC20 {
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
-        uint256 wethAmount = swapRouter.exactInputSingle(params);
+        uint256 tokenOutAmount = swapRouter.exactInputSingle(params);
+        return tokenOutAmount;
     }
 
-    function buy() public payable {
-        uint256 tokensToMint = msg.value * ethToTokenRatio;
-        vault.deposit(
-            0xc778417E063141139Fce010982780140Aa0cD5Ab,
-            msg.sender,
-            msg.value
-        );
-        _mint(msg.sender, tokensToMint);
-    }
+    // function buy() public payable {
+    //     uint256 tokensToMint = msg.value * ethToTokenRatio;
+    //     vault.deposit(
+    //         0xc778417E063141139Fce010982780140Aa0cD5Ab,
+    //         msg.sender,
+    //         msg.value
+    //     );
+    //     _mint(msg.sender, tokensToMint);
+    // }
 
-    function sell(uint256 tokensToSell) public {
-        uint256 ethToWithdraw = tokensToSell / ethToTokenRatio;
-        vault.withdraw(
-            0xc778417E063141139Fce010982780140Aa0cD5Ab,
-            msg.sender,
-            ethToWithdraw
-        );
-        _burn(msg.sender, tokensToSell);
-    }
+    // function sell(uint256 tokensToSell) public {
+    //     uint256 ethToWithdraw = tokensToSell / ethToTokenRatio;
+    //     vault.withdraw(
+    //         0xc778417E063141139Fce010982780140Aa0cD5Ab,
+    //         msg.sender,
+    //         ethToWithdraw
+    //     );
+    //     _burn(msg.sender, tokensToSell);
+    // }
 }
