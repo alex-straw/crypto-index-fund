@@ -4,20 +4,24 @@ pragma solidity ^0.8.7;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Vault.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract TestPortfolio is ERC20 {
     Vault vault;
-    uint256 public ethToTokenRatio;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
+    ISwapRouter uniswapRouter;
 
-    constructor(string memory name_, string memory symbol_)
-        ERC20(name_, symbol_)
-    {
-        ethToTokenRatio = 1000;
-        tokenAddresses.push(0xc778417E063141139Fce010982780140Aa0cD5Ab);
-        percentageHoldings.push(100);
-        vault = new Vault(tokenAddresses);
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address[] memory tokenAddresses_,
+        uint256[] memory percentageHoldings_
+    ) ERC20(name_, symbol_) {
+        tokenAddresses = tokenAddresses_;
+        percentageHoldings = percentageHoldings_;
+        vault = new Vault(tokenAddresses_);
+        uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     }
 
     function buy() public payable {
