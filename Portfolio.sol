@@ -20,6 +20,7 @@ contract TestPortfolio is ERC20 {
         uint256[] memory percentageHoldings_
     ) ERC20(name_, symbol_) {
         // $10 worth of Eth 24/3/22
+        // Would be cool to use Chainlink to work out what $10 worth of Eth is and ensure we get good price
         require(
             msg.value > 3268779871915400,
             "Creating a Portfolio requires more Eth"
