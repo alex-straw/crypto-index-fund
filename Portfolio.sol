@@ -11,6 +11,7 @@ contract TestPortfolio is ERC20 {
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
     ISwapRouter uniswapRouter;
+    ERC20 WETH = ERC20(0xc778417E063141139Fce010982780140Aa0cD5Ab);
 
     constructor(
         string memory name_,
@@ -19,23 +20,57 @@ contract TestPortfolio is ERC20 {
         uint256[] memory percentageHoldings_
     ) ERC20(name_, symbol_) {
         // $10 worth of Eth 24/3/22
-        require(msg.value > 3268779871915400, "Creating a Portfolio requires more Eth");
+        require(
+            msg.value > 3268779871915400,
+            "Creating a Portfolio requires more Eth"
+        );
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
         uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
-     
+
         // Buy the underlying tokens with the amount of Eth in msg.value
         // First, convert Eth to Weth
-        // Then, work out the proportions of each underlying to buy, in Weth
-        // Then spend that Weth and get the underlying
-        // Send all these to the vault
-
+        WETH.transfer(msg.value);
+        uint256 wethBalance = WETH.balanceOf(address(this));
+        // Loop through tokens to buy
+        for (i = 0; i < tokenAddresses_.length; i++) {
+            // Work out WETH to spend
+            wethToSpend = wethBalance * (percentageHoldings_[i] / 100);
+            // Swap WETH for token and assign it to the vault
+            swapWethForToken(wethToSpend, tokenAddresses[i], address(vault));
+        }
         _mint(msg.sender, 99);
-        _mint(vault.address, 1);
+        _mint(address(vault), 1);
     }
 
-    function buyUnderlying() private
+    function swapFromWeth(
+        uint256 wethAmount,
+        address tokenOut,
+        address recipient
+    ) private {
+        require(
+            WETH.balanceOf(address(this)) >= wethAmount,
+            "Insufficient funds"
+        );
+        TransferHelper.safeApprove(
+            address(WETH),
+            address(swapRouter),
+            wethAmount
+        );
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: address(WETH),
+                tokenOut: tokenOut,
+                fee: 3000,
+                recipient: recipient,
+                deadline: block.timestamp,
+                amountIn: wethAmount,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+        uint256 wethAmount = swapRouter.exactInputSingle(params);
+    }
 
     function buy() public payable {
         uint256 tokensToMint = msg.value * ethToTokenRatio;
