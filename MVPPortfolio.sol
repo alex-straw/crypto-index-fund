@@ -8,7 +8,7 @@ import "./Vault.sol";
 // Example portfolio of Weth and Dai
 contract MVPPortfolio is ERC20 {
     // STATE VARIABLES
-    Vault vault;
+    Vault public vault;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
     address payable WETH = payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
@@ -34,8 +34,9 @@ contract MVPPortfolio is ERC20 {
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        deposit(getWeth());
-        _mint(msg.sender, 100);
+        uint256 weth = getWeth();
+        deposit(weth);
+        _mint(msg.sender, weth);
     }
 
     function buy() public payable {
@@ -88,10 +89,9 @@ contract MVPPortfolio is ERC20 {
                 tokenAddresses[i]
             );
             // Calculate contribution of token to vault value, which = quantity of token * price of token
-            uint256 vaultContribution = vault.getTotalQuantity(
-                tokenAddresses[i]
-            ) * (wethAmount / swappedAmount);
-            vaultValuePrior += vaultContribution;
+            vaultValuePrior +=
+                vault.getTotalQuantity(tokenAddresses[i]) *
+                (wethAmount / swappedAmount);
             // Deposit holding in vault
             vault.deposit(tokenAddresses[i], msg.sender, swappedAmount);
         }
