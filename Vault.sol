@@ -7,7 +7,7 @@ pragma solidity ^0.8.7;
 
 contract Vault {
     // totalAssets: token address => total quantity owned
-    mapping(address => uint256) public totalAssets;
+    mapping(address => uint256) private totalAssets;
     // Tracks user ownership of assets in vault
     // userAssets: token address -> user address -> quantity owned by user
     mapping(address => mapping(address => uint256)) private userAssets;
@@ -45,7 +45,20 @@ contract Vault {
             userAssets[tokenAddress][userAddress] >= amount,
             "Insufficient funds"
         );
+        // Need to actually transfer the token to the user
         totalAssets[tokenAddress] -= amount;
         userAssets[tokenAddress][userAddress] -= amount;
+    }
+
+    function getTotalQuantity(address token) public view returns (uint256) {
+        return totalAssets[token];
+    }
+
+    function getUserQuantity(address token, address user)
+        public
+        view
+        returns (uint256)
+    {
+        return userAssets[token][user];
     }
 }
