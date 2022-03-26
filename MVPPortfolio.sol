@@ -34,9 +34,8 @@ contract MVPPortfolio is ERC20 {
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        uint256 weth = getWeth();
-        deposit(weth);
-        _mint(msg.sender, weth);
+        deposit(getWeth());
+        _mint(msg.sender, 100 * (10**decimals()));
     }
 
     function buy() public payable {
