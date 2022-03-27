@@ -4,6 +4,8 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// Rinkeby Address: 0x1fCb5Ef0826112f904ABdBBB0493158737Ceb726
+
 contract FakeUniswap {
 
     // Fake Uniswap contract for testing multi-ERC20 portfolios
