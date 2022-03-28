@@ -11,22 +11,18 @@ contract FakeUniswap {
     // Fake Uniswap contract for testing multi-ERC20 portfolios
     // 1. Transfer DAI and LINK tokens to this address first (from MetaMask)
 
-    address DAI;
-    address WETH;
-    address LINK;
+    address constant DAI = 0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa;
+    address constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
+    address constant LINK = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
+
     address owner;
 
     mapping(address => uint256) exchangeRate; // WETH to token exchange rate
 
     constructor () {
-        DAI = 0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa;
-        LINK = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
-        WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
-
         exchangeRate[DAI] = 5000;
         exchangeRate[LINK] = 200;
         owner = msg.sender;
-
     }
 
     modifier onlyOwner(){
