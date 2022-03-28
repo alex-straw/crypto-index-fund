@@ -43,18 +43,4 @@ contract FakeUniswap {
         // Contract transfers _tokenToBuy
         IERC20(_tokenToBuy).transfer(_recipient, _amountWethToSell*exchangeRate[_tokenToBuy]);
     }
-
-    // DEBUG FUNCTIONS
-
-    function contractLinkBalance() public view returns(uint256) {
-        return IERC20(LINK).balanceOf(address(this));
-    }
-
-    function contractDAIBalance() public view returns(uint256) {
-        return IERC20(DAI).balanceOf(address(this));
-    }
-
-    function withdrawToken(address _tokenAddress) public onlyOwner {
-        IERC20(_tokenAddress).transfer(owner, IERC20(_tokenAddress).balanceOf(address(this)));
-    }
 }
