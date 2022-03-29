@@ -3,6 +3,7 @@
 pragma solidity ^0.8.7;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Vault.sol";
 
 // Example portfolio of Weth and Dai
@@ -34,13 +35,14 @@ contract MVPPortfolio is ERC20 {
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        deposit(getWeth());
+        ethToWeth();
+        deposit(msg.value);
         _mint(msg.sender, 100 * (10**decimals()));
     }
 
     function buy() public payable {
-        uint256 wethAmount = getWeth();
-        uint256 vaultValuePrior = deposit(wethAmount);
+        ethToWeth();
+        uint256 vaultValuePrior = deposit(msg.value);
         // The number of tokens to mint is determined by the formula:
         // t = (SUPPLY_b * WETH) / NAV_b
         // where:
@@ -48,7 +50,7 @@ contract MVPPortfolio is ERC20 {
         // SUPPLY_b = total supply of tokens before the issuance
         // NAV_b = net asset value (in vault) after the deposits
         // WETH = amount of Weth deposited for issuance
-        uint256 tokensToMint = (totalSupply() * wethAmount) / vaultValuePrior;
+        uint256 tokensToMint = (totalSupply() * msg.value) / vaultValuePrior;
         _mint(msg.sender, tokensToMint);
     }
 
@@ -60,7 +62,7 @@ contract MVPPortfolio is ERC20 {
                 tokenAddresses[i],
                 msg.sender
             );
-            // Withdraw holding from vault
+            // Withdraw holding from vault, transfer tokens to user done inside the vault
             vault.withdraw(
                 tokenAddresses[i],
                 msg.sender,
@@ -72,19 +74,17 @@ contract MVPPortfolio is ERC20 {
 
     // HELPER FUNCTIONS
 
-    function getWeth() public payable returns (uint256) {
+    function ethToWeth() public payable {
         (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
         require(sent, "Failed to swap Eth for Weth");
-        return msg.value;
     }
 
     function deposit(uint256 wethAmount) private returns (uint256) {
         uint256 vaultValuePrior = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            // TODO: Swap Weth for token...
+            // Swap WETH for a different token which is transferred to the vault
             uint256 swappedAmount = swap(
                 wethAmount * (percentageHoldings[i] / 100),
-                WETH,
                 tokenAddresses[i]
             );
             // Calculate contribution of token to vault value, which = quantity of token * price of token
@@ -107,17 +107,19 @@ contract MVPPortfolio is ERC20 {
 
     // Needs to be implemented properly using Uniswap
     // For now, stubbed the method to return hardcoded values for WETH and DAI
-    function swap(
-        uint256 wethAmount,
-        address fromAddress,
-        address toAddress
-    ) private returns (uint256) {
+    // Important: needs to transfer ownership of tokens to vault
+    function swap(uint256 wethAmount, address toAddress)
+        public
+        returns (uint256)
+    {
         uint256 swappedAmount = 0;
         if (toAddress == WETH) {
             swappedAmount = wethAmount;
         } else if (toAddress == DAI) {
             swappedAmount = wethAmount * 3119;
         }
+        // Note: this will only work for WETH because that's the only token we have a balance for without using Uniswap
+        IERC20(toAddress).transfer(address(vault), swappedAmount);
         return swappedAmount;
     }
 
