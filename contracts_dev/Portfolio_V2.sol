@@ -46,9 +46,9 @@ contract portfolio_V2 is ERC20 {
         require(msg.value > 0, "Eth required");
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
-        vault = new Vault(tokenAddresses_);            // Deposit holding in vault
+        vault = new Vault(tokenAddresses_);  // Deposit holding in vault
         ethToWeth();
-        Owner = msg.sender;
+        Owner = msg.sender;  // Left this in case we mint to owner's address
         initialisePortfolio();
     }
 
