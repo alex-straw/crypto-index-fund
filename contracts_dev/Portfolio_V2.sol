@@ -62,7 +62,6 @@ contract Portfolio_V2 is ERC20 {
         for (uint i=0; i < tokenAddresses.length; i++) {
             _percentageWethAmount = _totalWethAmount * percentageHoldings[i] / 100;
             uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
-            initialised = true;
             // Deposit initial holding in vault
             vault.deposit(tokenAddresses[i], Owner, numTokensAcquired);
         }
