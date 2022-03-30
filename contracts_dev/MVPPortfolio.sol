@@ -26,9 +26,12 @@ contract MVPPortfolio is ERC20 {
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
     address payable WETH = payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
+    address constant fakeUniswap = 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1; // Rinkeby
+    uint256 public _totalWethAmount;
+    uint256 public _percentageWethAmount;
 
-    // TEMPORARY STATE VARIABLES
-    address payable DAI = payable(0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa);
+    address public Owner;
+    bool initialised = false;
 
     constructor(
         string memory name_,
@@ -49,11 +52,51 @@ contract MVPPortfolio is ERC20 {
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
         ethToWeth();
-        deposit(msg.value);
-        _mint(msg.sender, 100 * (10**decimals()));
+        Owner = msg.sender;
     }
+    
+    // ------------------------------  Initalise Portfolio ----------------------------------- //
 
-    function buy() public payable {
+    function initialisePortfolio() onlyOwner notInitialised public {
+        _totalWethAmount = getBalance(0xc778417E063141139Fce010982780140Aa0cD5Ab, address(this));
+        for (uint i=0; i < tokenAddresses.length; i++) {
+            _percentageWethAmount = _totalWethAmount * percentageHoldings[i] / 100;
+            uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
+            initialised = true;
+            // Deposit initial holding in vault
+            vault.deposit(tokenAddresses[i], Owner, numTokensAcquired);
+        }
+        _mint(Owner, 100 * (10**decimals())); 
+    }
+    
+    // --------------------------------------- Swap ------------------------------------------- //
+
+    function swap(uint256 wethAmount, address tokenAddress)
+        private
+        returns (uint256)
+    {
+        uint256 _numTokensAcquired = 0;
+        if (tokenAddress == WETH) {
+            _numTokensAcquired = wethAmount;
+            IERC20(tokenAddress).transfer(address(vault), _numTokensAcquired);
+            return _numTokensAcquired;
+
+        } else {
+            // tokenAddress can only be LINK or DAI
+            uint256 _numTokensAcquired = IfakeUniswap(fakeUniswap).swapWethForToken(tokenAddress, address(vault), wethAmount);
+            IERC20(WETH).transfer(fakeUniswap, wethAmount);  // Arbitrary transfer for debugging 
+            return _numTokensAcquired;
+        }
+    }
+    
+    function ethToWeth() public payable {
+        (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
+        require(sent, "Failed to swap Eth for Weth");
+    }
+    
+    // ---------------------------------- Buy / Sell / Deposit ---------------------------------- //
+
+    function buy() public payable isInitialised {
         ethToWeth();
         uint256 vaultValuePrior = deposit(msg.value);
         // The number of tokens to mint is determined by the formula:
@@ -67,9 +110,8 @@ contract MVPPortfolio is ERC20 {
         _mint(msg.sender, tokensToMint);
     }
 
-    function sell(uint256 tokensToSell) public {
-        uint256 proportionToSell = tokensToSell / balanceOf(msg.sender);
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+    function sell(uint256 tokensToSell) public isInitialised {
+        for (uint i = 0; i < tokenAddresses.length; i++) {
             // How much of the token do they own?
             uint256 userAssets = vault.getUserQuantity(
                 tokenAddresses[i],
@@ -79,36 +121,27 @@ contract MVPPortfolio is ERC20 {
             vault.withdraw(
                 tokenAddresses[i],
                 msg.sender,
-                userAssets * proportionToSell
+                userAssets * tokensToSell / balanceOf(msg.sender)
             );
         }
         _burn(msg.sender, tokensToSell);
     }
 
-    // HELPER FUNCTIONS
-
-    function ethToWeth() public payable {
-        (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
-        require(sent, "Failed to swap Eth for Weth");
-    }
-
-    function deposit(uint256 wethAmount) private returns (uint256) {
+    function deposit(uint256 _totalWethAmount) private isInitialised returns (uint256) {
         uint256 vaultValuePrior = 0;
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+        for (uint i = 0; i < tokenAddresses.length; i++) {
             // Swap WETH for a different token which is transferred to the vault
-            uint256 swappedAmount = swap(
-                wethAmount * (percentageHoldings[i] / 100),
-                tokenAddresses[i]
-            );
+            _percentageWethAmount = _totalWethAmount * percentageHoldings[i] / 100;
+            uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
             // Calculate contribution of token to vault value, which = quantity of token * price of token
-            vaultValuePrior +=
-                vault.getTotalQuantity(tokenAddresses[i]) *
-                (wethAmount / swappedAmount);
+            vaultValuePrior += vault.getTotalQuantity(tokenAddresses[i]) * (_percentageWethAmount / numTokensAcquired);
             // Deposit holding in vault
-            vault.deposit(tokenAddresses[i], msg.sender, swappedAmount);
+            vault.deposit(tokenAddresses[i], msg.sender, numTokensAcquired);
         }
         return vaultValuePrior;
     }
+    
+    // ----------------------------------- Misc Functions ----------------------------------- // 
 
     function sum(uint256[] memory list) private pure returns (uint256) {
         uint256 s = 0;
@@ -117,32 +150,25 @@ contract MVPPortfolio is ERC20 {
         }
         return s;
     }
-
-    // Needs to be implemented properly using Uniswap
-    // For now, stubbed the method to return hardcoded values for WETH and DAI
-    // Important: needs to transfer ownership of tokens to vault
-    function swap(uint256 wethAmount, address toAddress)
-        public
-        returns (uint256)
-    {
-        uint256 swappedAmount = 0;
-        if (toAddress == WETH) {
-            swappedAmount = wethAmount;
-        } else if (toAddress == DAI) {
-            swappedAmount = wethAmount * 3119;
-        }
-        // Note: this will only work for WETH because that's the only token we have a balance for without using Uniswap
-        IERC20(toAddress).transfer(address(vault), swappedAmount);
-        return swappedAmount;
+    
+    function getBalance(address _tokenAddress, address _address) public view returns(uint256) {
+        return IERC20(_tokenAddress).balanceOf(_address);
+    }
+    
+    // -------------------------------------- Modifiers -------------------------------------- // 
+ 
+    modifier onlyOwner() {
+        require(Owner==msg.sender);
+        _;
     }
 
-    // FUNCTIONS FOR DEBUGGING
-
-    function getEthBalance() public view returns (uint256) {
-        return address(this).balance;
+    modifier isInitialised() {
+        require(initialised==true);
+        _;
     }
 
-    function getWethBalance() public view returns (uint256) {
-        return ERC20(WETH).balanceOf(address(this));
+    modifier notInitialised() {
+        require(initialised==false);
+        _;
     }
 }
