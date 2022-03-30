@@ -14,7 +14,7 @@ interface IfakeUniswap {
 
 contract TestSwap {
 
-    address constant fakeUniswap = 0x1fCb5Ef0826112f904ABdBBB0493158737Ceb726;
+    address constant fakeUniswap = 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1;
     address constant DAI = 0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa;
     address constant LINK = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
     address constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;

@@ -4,7 +4,7 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-// Rinkeby Address: 0x1fCb5Ef0826112f904ABdBBB0493158737Ceb726
+// Rinkeby Address: 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1
 
 contract FakeUniswap {
 

@@ -6,6 +6,17 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Vault.sol";
 
+
+// ------------------------------ Temporary Interface for Fake Uniswap ------------------------------ // 
+
+interface IfakeUniswap {
+    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) external;
+    function increment() external;
+}
+
+// -------------------------------------------------------------------------------------------------- // 
+
+
 // Example portfolio of Weth and Dai
 contract MVPPortfolio is ERC20 {
     // STATE VARIABLES
@@ -15,7 +26,11 @@ contract MVPPortfolio is ERC20 {
     address payable WETH = payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
 
     // TEMPORARY STATE VARIABLES
-    address payable DAI = payable(0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa);
+    address constant DAI = 0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa;
+    address constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
+    address constant LINK = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
+
+    address constant fakeUniswap = 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1; // Rinkeby
 
     constructor(
         string memory name_,
@@ -108,19 +123,22 @@ contract MVPPortfolio is ERC20 {
     // Needs to be implemented properly using Uniswap
     // For now, stubbed the method to return hardcoded values for WETH and DAI
     // Important: needs to transfer ownership of tokens to vault
-    function swap(uint256 wethAmount, address toAddress)
+    function swap(uint256 wethAmount, address tokenAddress)
         public
         returns (uint256)
     {
         uint256 swappedAmount = 0;
-        if (toAddress == WETH) {
+        if (tokenAddress == WETH) {
             swappedAmount = wethAmount;
-        } else if (toAddress == DAI) {
-            swappedAmount = wethAmount * 3119;
+            IERC20(tokenAddress).transfer(address(vault), swappedAmount);
+            return swappedAmount;
+
+        } else {
+            IERC20(WETH).transfer(fakeUniswap, wethAmount);  // Arbitrary transfer for debugging 
+            // tokenAddress can only be LINK or DAI
+            swappedAmount = IfakeUniswap(fakeUniswap).swapWethForToken(tokenAddress, address(vault), wethAmount);
+            return swappedAmount;
         }
-        // Note: this will only work for WETH because that's the only token we have a balance for without using Uniswap
-        IERC20(toAddress).transfer(address(vault), swappedAmount);
-        return swappedAmount;
     }
 
     // FUNCTIONS FOR DEBUGGING
