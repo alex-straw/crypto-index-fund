@@ -49,11 +49,12 @@ contract portfolio_V2 is ERC20 {
         vault = new Vault(tokenAddresses_);            // Deposit holding in vault
         ethToWeth();
         Owner = msg.sender;
+        initialisePortfolio()
     }
 
     // ------------------------------  Initalise Portfolio ----------------------------------- //
 
-    function initialisePortfolio() onlyOwner notInitialised public {
+    function initialisePortfolio() private {
         _totalWethAmount = getBalance(0xc778417E063141139Fce010982780140Aa0cD5Ab, address(this));
         for (uint i=0; i < tokenAddresses.length; i++) {
             _percentageWethAmount = _totalWethAmount * percentageHoldings[i] / 100;
@@ -92,7 +93,7 @@ contract portfolio_V2 is ERC20 {
 
     // ---------------------------------- Buy / Sell / Deposit ---------------------------------- //
 
-    function buy() public payable isInitialised {
+    function buy() public payable {
         ethToWeth();
         uint256 vaultValuePrior = deposit(msg.value);
         // The number of tokens to mint is determined by the formula:
@@ -106,7 +107,7 @@ contract portfolio_V2 is ERC20 {
         _mint(msg.sender, tokensToMint);
     }
 
-    function sell(uint256 tokensToSell) public isInitialised {
+    function sell(uint256 tokensToSell) public {
         for (uint8 i = 0; i < tokenAddresses.length; i++) {
             // How much of the token do they own?
             uint256 userAssets = vault.getUserQuantity(
@@ -123,7 +124,7 @@ contract portfolio_V2 is ERC20 {
         _burn(msg.sender, tokensToSell);
     }
 
-    function deposit(uint256 _totalWethAmount) private isInitialised returns (uint256) {
+    function deposit(uint256 _totalWethAmount) private returns (uint256) {
         uint256 vaultValuePrior = 0;
         for (uint8 i = 0; i < tokenAddresses.length; i++) {
             // Swap WETH for a different token which is transferred to the vault
@@ -156,16 +157,6 @@ contract portfolio_V2 is ERC20 {
 
     modifier onlyOwner() {
         require(Owner==msg.sender);
-        _;
-    }
-
-    modifier isInitialised() {
-        require(initialised==true);
-        _;
-    }
-
-    modifier notInitialised() {
-        require(initialised==false);
         _;
     }
 }
