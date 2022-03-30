@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // Needs to track who owns each of those coins
 
 interface IfakeUniswap {
-    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) external;
+    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) external returns(uint256);
     function increment() external;
 }
 
