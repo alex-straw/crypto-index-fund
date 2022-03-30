@@ -20,7 +20,7 @@ interface IfakeUniswap {
 
 
 // Example portfolio of Weth and Dai
-contract MVPPortfolio is ERC20 {
+contract Portfolio_V2 is ERC20 {
     // STATE VARIABLES
     Vault public vault;
     address[] public tokenAddresses;
