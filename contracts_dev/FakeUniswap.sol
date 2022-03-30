@@ -34,13 +34,15 @@ contract FakeUniswap {
         return IERC20(_token).balanceOf(_account);
     }
 
-    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) public {
+    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) public returns(uint256) {
         require(getBalance(WETH, msg.sender) >= _amountWethToSell, "Sender does not have enough WETH");
         require(getBalance(_tokenToBuy, address(this)) >= _amountWethToSell * exchangeRate[_tokenToBuy], "Contract has insufficient funds");
         // User transfers WETH
         // Add transfer function to MVP Portfolio
         // IERC20(WETH).transfer(THIS_CONTRACT, AMOUNTWETH);
-        // Contract transfers _tokenToBuy
-        IERC20(_tokenToBuy).transfer(_recipient, _amountWethToSell*exchangeRate[_tokenToBuy]);
+        // Contract transfers numTokens of _tokenToBuy 
+        uint256 numTokens = _amountWethToSell*exchangeRate[_tokenToBuy];
+        IERC20(_tokenToBuy).transfer(_recipient, numTokens);
+        return(numTokens);
     }
 }
