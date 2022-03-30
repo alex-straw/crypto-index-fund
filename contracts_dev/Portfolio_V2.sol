@@ -49,7 +49,7 @@ contract portfolio_V2 is ERC20 {
         vault = new Vault(tokenAddresses_);            // Deposit holding in vault
         ethToWeth();
         Owner = msg.sender;
-        initialisePortfolio()
+        initialisePortfolio();
     }
 
     // ------------------------------  Initalise Portfolio ----------------------------------- //
