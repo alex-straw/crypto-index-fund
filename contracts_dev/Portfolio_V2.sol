@@ -104,7 +104,6 @@ contract portfolio_V2 is ERC20 {
     }
 
     function sell(uint256 tokensToSell) public isInitialised {
-        uint256 proportionToSell = tokensToSell / balanceOf(msg.sender);
         for (uint8 i = 0; i < tokenAddresses.length; i++) {
             // How much of the token do they own?
             uint256 userAssets = vault.getUserQuantity(
@@ -115,7 +114,7 @@ contract portfolio_V2 is ERC20 {
             vault.withdraw(
                 tokenAddresses[i],
                 msg.sender,
-                userAssets * proportionToSell
+                userAssets * tokensToSell / balanceOf(msg.sender)
             );
         }
         _burn(msg.sender, tokensToSell);
