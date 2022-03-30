@@ -7,7 +7,7 @@ import "./Vault.sol";
 
 // TODO:
 // Burn 1% of initial FOLO coins so that the contract doesn't die when all token holders sell 
-
+// Need to figure out logic of paying the owner - as we need to assign assets as well as tokens
 
 // ------------------------------ Temporary Interface for Fake Uniswap ------------------------------ // 
 
