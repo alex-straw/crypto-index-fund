@@ -5,6 +5,20 @@ pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Vault.sol";
 
+// TODO:
+// Burn 1% of initial FOLO coins so that the contract doesn't die when all token holders sell 
+
+
+// ------------------------------ Temporary Interface for Fake Uniswap ------------------------------ // 
+
+interface IfakeUniswap {
+    function swapWethForToken(address _tokenToBuy, address _recipient, uint256 _amountWethToSell) external returns(uint256);
+    function increment() external;
+}
+
+// -------------------------------------------------------------------------------------------------- // 
+
+
 // Example portfolio of Weth and Dai
 contract MVPPortfolio is ERC20 {
     // STATE VARIABLES
