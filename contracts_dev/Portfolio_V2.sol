@@ -32,14 +32,15 @@ contract Portfolio_V2 is ERC20 {
     address payable constant WETH =
         payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
     address constant fakeUniswap = 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1; // Rinkeby
-
+    uint256 public ownerFee; 
     address public Owner;
 
     constructor(
         string memory name_,
         string memory symbol_,
         address[] memory tokenAddresses_,
-        uint256[] memory percentageHoldings_
+        uint256[] memory percentageHoldings_,
+        uint256 ownerFee_
     ) payable ERC20(name_, symbol_) {
         require(
             tokenAddresses_.length == percentageHoldings_.length,
@@ -50,11 +51,13 @@ contract Portfolio_V2 is ERC20 {
             "Percentage holdings must sum to 100"
         );
         require(msg.value > 0, "Eth required");
+        require(ownerFee >= 0 && ownerFee < 10000, "Owner Fee must be between 0 (0%) and 10000 (100%)");
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
         ethToWeth();
         Owner = msg.sender;
+        ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
         initialisePortfolio();
     }
 
@@ -76,6 +79,7 @@ contract Portfolio_V2 is ERC20 {
             vault.deposit(tokenAddresses[i], numTokensAcquired);
         }
         _mint(Owner, 100 * (10**decimals()));
+        _mint(address(vault), 100 * (10**(decimals()-10))); // Prevents contract reaching 0 (tiny amount of owner deposit lost)
     }
 
     // --------------------------------------- Swap ------------------------------------------- //
@@ -119,7 +123,9 @@ contract Portfolio_V2 is ERC20 {
         // NAV_b = net asset value (in vault) after the deposits
         // WETH = amount of Weth deposited for issuance
         uint256 tokensToMint = (totalSupply() * msg.value) / vaultValuePrior;
-        _mint(msg.sender, tokensToMint);
+        uint256 ownerTokens = tokensToMint * ownerFee / 10000;
+        _mint(msg.sender, tokensToMint-ownerTokens);
+        _mint(Owner, ownerTokens);
     }
 
     function sell(uint256 tokensToSell) public {
