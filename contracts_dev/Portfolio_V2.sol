@@ -7,25 +7,7 @@ import "./Vault.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-// TODO:
-// Burn 1% of initial FOLO coins so that the contract doesn't die when all token holders sell
-// Need to figure out logic of paying the owner - as we need to assign assets as well as tokens
 
-// ------------------------------ Temporary Interface for Fake Uniswap ------------------------------ //
-
-interface IfakeUniswap {
-    function swapWethForToken(
-        address _tokenToBuy,
-        address _recipient,
-        uint256 _amountWethToSell
-    ) external returns (uint256);
-
-    function increment() external;
-}
-
-// -------------------------------------------------------------------------------------------------- //
-
-// Example portfolio of Weth and Dai
 contract Portfolio_V2 is ERC20 {
     // STATE VARIABLES
     Vault public vault;
@@ -33,7 +15,6 @@ contract Portfolio_V2 is ERC20 {
     uint256[] public percentageHoldings;
     address payable constant WETH =
         payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
-    address constant fakeUniswap = 0xFbd8c741Be3E6A0260AEa0875cd8801D3ACB0dA1; // Rinkeby
     ISwapRouter constant uniswapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     uint256 public ownerFee;
