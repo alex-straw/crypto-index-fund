@@ -167,16 +167,12 @@ contract Portfolio_V2 is ERC20 {
         uint256 vaultValuePrior = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             // Swap WETH for a different token which is transferred to the vault
-            uint256 _percentageWethAmount = (_totalWethAmount *
-                percentageHoldings[i]) / 100;
-            uint256 numTokensAcquired = swap(
-                _percentageWethAmount,
-                tokenAddresses[i]
-            );
+            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) /
+                100;
+            uint256 numTokensAcquired = swap(wethToSpend, tokenAddresses[i]);
             // Calculate contribution of token to vault value, which = quantity of token * price of token
             vaultValuePrior +=
-                (vault.assetQuantities(tokenAddresses[i]) *
-                    _percentageWethAmount) /
+                (vault.assetQuantities(tokenAddresses[i]) * wethToSpend) /
                 numTokensAcquired;
             // Deposit holding in vault
             vault.deposit(tokenAddresses[i], numTokensAcquired);
