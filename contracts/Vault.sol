@@ -7,14 +7,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // Needs to track which coins exist inside a portfolio
 
 contract Vault {
-    // totalAssets: token address => total quantity owned
-    mapping(address => uint256) private totalAssets;
+    // assetQuantities: token address => total quantity owned
+    mapping(address => uint256) public assetQuantities;
     address portfolioAddress;
 
     constructor(address[] memory tokenAddresses) {
         portfolioAddress = msg.sender;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            totalAssets[tokenAddresses[i]] = 0;
+            assetQuantities[tokenAddresses[i]] = 0;
         }
     }
 
@@ -23,11 +23,11 @@ contract Vault {
         _;
     }
 
-    function deposit(
-        address tokenAddress,
-        uint256 amount
-    ) external isPortfolio {
-        totalAssets[tokenAddress] += amount;
+    function deposit(address tokenAddress, uint256 amount)
+        external
+        isPortfolio
+    {
+        assetQuantities[tokenAddress] += amount;
     }
 
     function withdraw(
@@ -35,11 +35,7 @@ contract Vault {
         address recipient,
         uint256 amount
     ) external isPortfolio {
-        totalAssets[tokenAddress] -= amount;
+        assetQuantities[tokenAddress] -= amount;
         IERC20(tokenAddress).transfer(recipient, amount);
-    }
-
-    function getTotalQuantity(address token) public view returns (uint256) {
-        return totalAssets[token];
     }
 }
