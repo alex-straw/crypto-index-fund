@@ -26,32 +26,29 @@ contract Portfolio_V2 is ERC20 {
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_,
         uint256 ownerFee_
-    ) payable ERC20(name_, symbol_) {
+    ) ERC20(name_, symbol_) {
         require(
             tokenAddresses_.length == percentageHoldings_.length,
             "Please specify the same number of token addresses as percentage holdings"
         );
-        require(
-            sum(percentageHoldings_) == 100,
+        require(sum(percentageHoldings_) == 100,
             "Percentage holdings must sum to 100"
         );
-        require(msg.value > 0, "Eth required");
-        require(
-            ownerFee >= 0 && ownerFee < 10000,
+        require(ownerFee >= 0 && ownerFee < 10000,
             "Owner Fee must be between 0 (0%) and 10000 (100%)"
         );
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        ethToWeth();
         Owner = msg.sender;
         ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
-        initialisePortfolio();
     }
 
     // ------------------------------  Initalise Portfolio ----------------------------------- //
 
-    function initialisePortfolio() private {
+    function initialisePortfolio() public payable onlyOwner zeroTotalSupply {
+        require(msg.value > 0, "Eth required");
+        ethToWeth();
         uint256 _totalWethAmount = getBalance(WETH, address(this));
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             uint256 _percentageWethAmount = (_totalWethAmount *
@@ -63,8 +60,7 @@ contract Portfolio_V2 is ERC20 {
             // Deposit initial holding in vault
             vault.deposit(tokenAddresses[i], numTokensAcquired);
         }
-        _mint(Owner, 100 * (10**decimals()) - 10000);
-        _mint(address(vault), 10000); // Prevents contract reaching 0 (tiny amount of owner deposit lost)
+        _mint(Owner, 100 * (10**decimals()));
     }
 
     // --------------------------------------- Swap ------------------------------------------- //
@@ -111,7 +107,7 @@ contract Portfolio_V2 is ERC20 {
 
     // ---------------------------------- Buy / Sell / Deposit ---------------------------------- //
 
-    function buy() public payable {
+    function buy() public payable nonZeroTotalSupply {
         ethToWeth();
         uint256 vaultValuePrior = deposit(msg.value);
         // The number of tokens to mint is determined by the formula:
@@ -127,7 +123,7 @@ contract Portfolio_V2 is ERC20 {
         _mint(Owner, ownerTokens);
     }
 
-    function sell(uint256 tokensToSell) public {
+    function sell(uint256 tokensToSell) public nonZeroTotalSupply {
         require(balanceOf(msg.sender) >= tokensToSell, "Insufficient funds");
         // Get total supply before burning
         uint256 prevSupply = totalSupply();
@@ -183,6 +179,16 @@ contract Portfolio_V2 is ERC20 {
 
     modifier onlyOwner() {
         require(Owner == msg.sender);
+        _;
+    }
+
+    modifier nonZeroTotalSupply() {
+        require(totalSupply() > 0, "Total supply is 0.  Contract must be initialised");
+        _;
+    }
+
+    modifier zeroTotalSupply() {
+        require(totalSupply() == 0, "Total supply is greater than 0 and does not need to be initialised");
         _;
     }
 }
