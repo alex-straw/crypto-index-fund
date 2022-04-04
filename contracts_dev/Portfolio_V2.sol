@@ -7,7 +7,6 @@ import "./Vault.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-
 contract Portfolio_V2 is ERC20 {
     // STATE VARIABLES
     Vault public vault;
@@ -18,29 +17,32 @@ contract Portfolio_V2 is ERC20 {
     ISwapRouter constant uniswapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     uint256 public ownerFee;
-    address public Owner;
+    address public owner;
 
     constructor(
         string memory name_,
         string memory symbol_,
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_,
+        address owner_,
         uint256 ownerFee_
     ) ERC20(name_, symbol_) {
         require(
             tokenAddresses_.length == percentageHoldings_.length,
             "Please specify the same number of token addresses as percentage holdings"
         );
-        require(sum(percentageHoldings_) == 100,
+        require(
+            sum(percentageHoldings_) == 100,
             "Percentage holdings must sum to 100"
         );
-        require(ownerFee >= 0 && ownerFee < 10000,
+        require(
+            ownerFee >= 0 && ownerFee < 10000,
             "Owner Fee must be between 0 (0%) and 10000 (100%)"
         );
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
         vault = new Vault(tokenAddresses_);
-        Owner = msg.sender;
+        owner = owner_;
         ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
     }
 
@@ -60,7 +62,7 @@ contract Portfolio_V2 is ERC20 {
             // Deposit initial holding in vault
             vault.deposit(tokenAddresses[i], numTokensAcquired);
         }
-        _mint(Owner, 100 * (10**decimals()));
+        _mint(owner, 100 * (10**decimals()));
     }
 
     // --------------------------------------- Swap ------------------------------------------- //
@@ -120,7 +122,7 @@ contract Portfolio_V2 is ERC20 {
         uint256 tokensToMint = (totalSupply() * msg.value) / vaultValuePrior;
         uint256 ownerTokens = (tokensToMint * ownerFee) / 10000;
         _mint(msg.sender, tokensToMint - ownerTokens);
-        _mint(Owner, ownerTokens);
+        _mint(owner, ownerTokens);
     }
 
     function sell(uint256 tokensToSell) public nonZeroTotalSupply {
@@ -168,7 +170,7 @@ contract Portfolio_V2 is ERC20 {
     }
 
     function getBalance(address _tokenAddress, address _address)
-        public
+        private
         view
         returns (uint256)
     {
@@ -178,17 +180,23 @@ contract Portfolio_V2 is ERC20 {
     // -------------------------------------- Modifiers -------------------------------------- //
 
     modifier onlyOwner() {
-        require(Owner == msg.sender);
+        require(owner == msg.sender);
         _;
     }
 
     modifier nonZeroTotalSupply() {
-        require(totalSupply() > 0, "Total supply is 0.  Contract must be initialised");
+        require(
+            totalSupply() > 0,
+            "Total supply is 0.  Contract must be initialised."
+        );
         _;
     }
 
     modifier zeroTotalSupply() {
-        require(totalSupply() == 0, "Total supply is greater than 0 and does not need to be initialised");
+        require(
+            totalSupply() == 0,
+            "Total supply is greater than 0 and does not need to be initialised."
+        );
         _;
     }
 }
