@@ -1,6 +1,6 @@
 const Web3 = require("web3");
 const ethers = require("ethers");
-const testPortfolioABI = require("./testPortfolioABI.json");
+const testPortfolioABI = require("../abi/testPortfolioABI.json");
 
 // Connect to Rinkeby (may be other ways to do this than Infura)
 const infuraId = "1c722de80b77412f86091fdf4d04b74b";
