@@ -212,7 +212,10 @@ contract Portfolio is ERC20 {
     // -------------------------------------- Modifiers -------------------------------------- //
 
     modifier onlyOwner() {
-        require(owner == msg.sender);
+        require(
+            owner == msg.sender,
+            "Only the owner can initialise the Portfolio."
+        );
         _;
     }
 

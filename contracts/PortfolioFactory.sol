@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.7;
 
-import "./Portfolio_v2.sol";
+import "./Portfolio.sol";
 
 /*
 This contract is for creating and tracking Portfolios
@@ -33,8 +33,8 @@ contract PortfolioFactory {
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_,
         uint256 ownerFee_
-    ) public returns (address) {
-        Portfolio_V2 portfolio = new Portfolio_V2(
+    ) public {
+        Portfolio portfolio = new Portfolio(
             name_,
             symbol_,
             tokenAddresses_,
@@ -52,6 +52,5 @@ contract PortfolioFactory {
             ownerFee_
         );
         portfolios.push(address(portfolio));
-        return address(portfolio);
     }
 }
