@@ -10,7 +10,15 @@ We have two smart contracts, one public and one private:
 2. Vault.sol
 3. PortfolioFactory.sol (not in MVP)
 
-## Test Portfolio
+## Test Portfolios
+
+## Kovan
+
+We have deployed the full MVP Portfolio (multi-asset, buy, sell functionality) on Kovan at the following address:
+
+*0x6CB8336581f0B99B225b14F3AfE7E2AC3f876C4F* 
+
+### Rinkeby
 
 We have deployed a Test Portfolio on the Rinkeby network at the following address: 
 

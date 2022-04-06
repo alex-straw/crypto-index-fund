@@ -12,10 +12,8 @@ contract Portfolio_V2 is ERC20 {
     Vault public vault;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
-    address payable constant WETH =
-        payable(0xc778417E063141139Fce010982780140Aa0cD5Ab);
-    ISwapRouter constant uniswapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    address payable constant WETH = payable(0xd0A1E359811322d97991E03f863a0C30C2cF029C);
+    ISwapRouter constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     uint256 public ownerFee;
     address public owner;
 
