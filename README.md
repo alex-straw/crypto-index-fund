@@ -13,7 +13,7 @@ What are the benefits of PortFolio?
 3. Sell the underlying assets for the open-market Eth value at any time.
 4. Create custom PortFolios according to your risk preferences.
 
-## Development
+## Development
 
 ### Smart contracts
 
