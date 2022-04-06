@@ -1,61 +1,59 @@
-# FinTech Group Project - Backend
+# PortFolio
 
-Backend for group 4 project: creating portfolios of crypto assets.
+This repository contains the backend code for the PortFolio project, written in Solidity. 
 
-## Smart contracts
+## Motivation
 
-We have two smart contracts, one public and one private:
+A PortFolio is an [ERC20 token](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol) representing a pre-defined 'basket of goods' (a portfolio) of crypto assets. These assets are themselves other ERC20 tokens on the Ethereum blockchain. 
 
-1. Portfolio.sol
-2. Vault.sol
-3. PortfolioFactory.sol (not in MVP)
+What are the benefits of PortFolio?
 
-## Test Portfolios
+1. Easily buy and hold a diversified set of crypto assets.
+2. Redeem for the underlying assets at any time.
+3. Sell the underlying assets for the open-market Eth value at any time.
+4. Create custom PortFolios according to your risk preferences.
 
-## Kovan
+## Development
 
-We have deployed the full MVP Portfolio (multi-asset, buy, sell functionality) on Kovan at the following address:
+### Smart contracts
+
+The contracts folder contains three smart contracts:
+
+1. Portfolio.sol - an ERC20 token representing a portfolio of crypto assets
+2. Vault.sol - a highly secure contract for storing the underlying assets held by the PortFolio
+3. PortfolioFactory.sol - a contract used to create new Portfolios and track existing Portfolios
+
+### Test Portfolios
+
+**Kovan**
+
+We have deployed an example Portfolio on Kovan at the following address:
 
 *0x6CB8336581f0B99B225b14F3AfE7E2AC3f876C4F* 
 
-### Rinkeby
+This PortFolio is made up of the following assets:
 
-We have deployed a Test Portfolio on the Rinkeby network at the following address: 
+| Asset           | Holding (%) |
+| --------------- | ----------- |
+| Wrapped Ether   | 20          |
+| Dai Stablecoin  | 40          |
+| ChainLink Token | 40          |
+
+**Rinkeby**
+
+We have deployed an example Portfolio on Kovan at the following address: 
 
 *0x7157Ea1F87Cc4CbeE63137D3CB5ecBd44eE1960a*
 
 ERC20 : NAME = "Portfolio", TICKER = "FOLO"
 
-It's super simple, containing only Eth!
-
-Please use it to test the *buy* and *sell* functions described below. 
-
-Also, it is an ERC20 token, which means it has many other useful methods, such as balanceOf and totalSupply. 
-
-The ERC20 specification, with all the functions, can be found [here](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol).
+It's super simple, containing only Weth.
 
 ## Core Functionality
 
-### 1. Creating a portfolio (not part of MVP)
+### 1. Creating a portfolio
 
 Use the constructor of PortfolioFactory.sol to create a portfolio containing *k* tokens:
-
-**Input:** 
-
-The index of each of the following arrays should correspond to the same ERC20 token.
-
-1. A list of token addresses. \
-   Rules: Must be ERC20 smart contract addresses. Must be of length k. \
-   Example: ["0xabc...","0xdef..."]
-
-2. A list of percentage holdings of each of the specified tokens. 
-   Rules: Must be of length k. Must sum to 100.
-   Example: [20,20,50,10]
-
-**Returns:**
-
-The contract (portfolio) address.
-
 
 ### 2. Buy into an existing portfolio
 
@@ -63,21 +61,26 @@ First, you need the contract (portfolio) address.
 
 Send a transaction to the *buy* function, with Ether in msg.value. 
 
-The function doesn't return anything.
-
-
 ### 3. Sell position in existing portfolio
 
 First, you need the contract (portfolio) address.
 
-Send a transaction to the *sell* function, and pass as argument the number of Folio coins to sell. 
+Send a transaction to the *sell* function, and pass as argument the number of PortFolio tokens to sell. 
 
-The function doesn't return anything.
+The function will sell the appropriate share of the underlying assets and transfer the Ether to your address. 
 
+### 3. Redeem assets from existing portfolio
 
-## Additional Functionality
+First, you need the contract (portfolio) address.
 
-1. Get info about portfolio
-2. View events (such as token minting/burning/new portfolio creation etc)
+Send a transaction to the *redeem* function, and pass as argument the number of PortFolio tokens to sell. 
+
+The function will transfer the appropriate share of the underlying assets to your address. 
+
+## Contributors
+
+[Luke Kirwan](https://github.com/thelk22)
+
+[Alex Straw](https://github.com/alex-straw)
 
 
