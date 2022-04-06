@@ -2,91 +2,233 @@
 
 pragma solidity ^0.8.7;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Vault.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
+contract Portfolio is ERC20 {
+    // -------  State ------- //
+    Vault public vault;
+    address[] public tokenAddresses;
+    uint256[] public percentageHoldings;
+    address payable constant WETH =
+        payable(0xd0A1E359811322d97991E03f863a0C30C2cF029C);
+    ISwapRouter constant uniswapRouter =
+        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    uint256 public ownerFee;
+    address public owner;
 
-contract Portfolio { 
-
-    struct Token {
-        string ticker;
-        uint256 vaultQuantity;
-        address tokenAddress;  // if true, that person already voted
-        address uniswapProxy; // For Price-Feeds https://kovan.etherscan.io/address/0x562C092bEb3a6DF77aDf0BB604F52c018E4f2814#internaltx
-        uint256 proportionHoldings;
-        uint256 tokenPrice;
+    // -------  Functions ------- //
+    /*
+     * Create a new Portfolio token representing a set of underlying assets.
+     *
+     * @param  name_   the name of the Portfolio
+     * @param  symbol_   the symbol for the Portfolio token
+     * @param  tokenAddresses_   the addresses of the ERC20 tokens that make up the Portfolio
+     * @param  percentageHoldings_   the desired percentage holding for each token specified in tokenAddresses_
+     * @param  owner_   the address of the Portfolio owner
+     * @param  ownerFee_   the size of the fee paid to the owner by buyers (in basis points)
+     */
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address[] memory tokenAddresses_,
+        uint256[] memory percentageHoldings_,
+        address owner_,
+        uint256 ownerFee_
+    ) ERC20(name_, symbol_) {
+        require(
+            tokenAddresses_.length == percentageHoldings_.length,
+            "Please specify the same number of token addresses as percentage holdings"
+        );
+        require(
+            sum(percentageHoldings_) == 100,
+            "Percentage holdings must sum to 100"
+        );
+        require(
+            ownerFee >= 0 && ownerFee < 10000,
+            "Owner Fee must be between 0 (0%) and 10000 (100%)"
+        );
+        tokenAddresses = tokenAddresses_;
+        percentageHoldings = percentageHoldings_;
+        vault = new Vault(tokenAddresses_);
+        owner = owner_;
+        ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
     }
 
-    uint8 id = 0;
-    uint256 basketTokensMinted = 0;
-    mapping(uint8 => Token) ERC20Map;
-    Vault vault;
+    // ---------------------  Initalise Portfolio --------------------- //
 
-
-    // https://rinkeby.etherscan.io/address/0x5eD8BD53B0c3fa3dEaBd345430B1A3a6A4e8BD7C --> Call Mint to get DAI
-    // Price feeds are LINK/USD, BAT/USD
-
-    // Sample Transaction (Both for Rinkeby), 
-    // LINK / ETH
-    // "LINK", "0x01BE23585060835E02B77ef475b0Cc51aA1e0709", "0xFABe80711F3ea886C3AC102c81ffC9825E16162E", 100
-
-    // WETH / USD
-    // "WETH", "0xc778417E063141139Fce010982780140Aa0cD5Ab", "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", 0
-
-    // BAT / USD
-    // "BAT", "0xDA5B056Cfb861282B4b59d29c9B395bcC238D29B", "0x031dB56e01f82f20803059331DC6bEe9b17F7fC9", 0
-
-    constructor(address[] memory tokenAddresses) {
-        vault = new Vault(tokenAddresses);
-    }
-
-    function addToBasket (string calldata _ticker, address _tokenAddress, address _uniswapProxy, uint256 _proportionHoldings) external {
-        ERC20Map[id].tokenAddress = _tokenAddress;
-        ERC20Map[id].uniswapProxy = _uniswapProxy;
-        ERC20Map[id].proportionHoldings = _proportionHoldings;
-        ERC20Map[id].tokenPrice = 0; // Default set to 0
-        id ++;
-    }
-
-    function getVaultAddress() public view returns(Vault) {
-        return vault;
-    }
-
-    function issue(uint256 ethAmount) public returns(uint256) {
-        // Determine value of underlying assets
-        uint256 totalValueLocked = 0; // Re-calculate TVL before issuing new tokens
-
-        for (uint i=0; i< id; i++) {
-		uint256 ethToSwap = ethAmount * ERC20Map[id].proportionHoldings / 100;
-		uint256 amtPurchased = swapTokens(ERC20Map[id].tokenAddress, ethToSwap, ERC20Map[id].uniswapProxy);
-
-		ERC20Map[id].tokenPrice = ethToSwap / amtPurchased;
-		ERC20Map[id].vaultQuantity += amtPurchased; // Keeps track of amount of tokens held in vault
-
-		// Add eth value of tokens together and record in TVL variable
-		totalValueLocked += ERC20Map[id].tokenPrice * ERC20Map[id].vaultQuantity;
+    function initialisePortfolio() public payable onlyOwner zeroTotalSupply {
+        require(msg.value > 0, "Eth required");
+        ethToWeth();
+        uint256 _totalWethAmount = getBalance(WETH, address(this));
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            uint256 _percentageWethAmount = (_totalWethAmount *
+                percentageHoldings[i]) / 100;
+            uint256 numTokensAcquired = swap(
+                _percentageWethAmount,
+                tokenAddresses[i]
+            );
+            // Deposit initial holding in vault
+            vault.deposit(tokenAddresses[i], numTokensAcquired);
         }
-	if (basketTokensMinted !=0) {
-            return getTokenIssueAmount(totalValueLocked, ethAmount, basketTokensMinted);
+        _mint(owner, 100 * (10**decimals()));
+    }
+
+    // --------------------- Buy / Sell / Deposit --------------------- //
+
+    /*
+     * Purchase underlying assets with Eth and issue new Portfolio tokens to the buyer.
+     *
+     * @param  msg.value   the amount of Eth to spend
+     */
+    function buy() public payable nonZeroTotalSupply {
+        // Convert payable amount to Weth
+        ethToWeth();
+        // Purchase underlying tokens with Weth and transfer to vault
+        uint256 vaultValuePrior = deposit(msg.value);
+        /*
+        The number of tokens to mint, t, is determined by the formula:
+        t = (SUPPLY_b * WETH) / NAV_b
+        where:
+        t = tokens to issue
+        SUPPLY_b = total supply of tokens before the issuance
+        NAV_b = net asset value (in vault) after the deposits
+        WETH = amount of Weth deposited for issuance
+        */
+        uint256 tokensToMint = (totalSupply() * msg.value) / vaultValuePrior;
+        uint256 ownerTokens = (tokensToMint * ownerFee) / 10000;
+        _mint(msg.sender, tokensToMint - ownerTokens);
+        _mint(owner, ownerTokens);
+    }
+
+    /*
+     * Sell Portfolio holding and receive underlying assets.
+     *
+     * @param  tokensToSell   the number of owned tokens to sell
+     */
+    function sell(uint256 tokensToSell) public nonZeroTotalSupply {
+        require(balanceOf(msg.sender) >= tokensToSell, "Insufficient funds");
+        // Get total supply before burning tokens
+        uint256 prevSupply = totalSupply();
+        _burn(msg.sender, tokensToSell);
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            // How much of the underlying asset is held in the vault
+            uint256 assetQuantity = vault.assetQuantities(tokenAddresses[i]);
+            // Withdraw holding from vault
+            // Vault handles the actual ERC20 transfer, since it is the owner of the tokens
+            vault.withdraw(
+                tokenAddresses[i],
+                msg.sender,
+                (assetQuantity * tokensToSell) / prevSupply
+            );
         }
-    	return 100;
     }
 
-    function getTokenIssueAmount(uint256 _totalValueLocked, uint256 _ethAmount, uint256 _basketTokensMinted) private pure returns(uint256 issueQty) {
-        return issueQty = _ethAmount / (_totalValueLocked / _basketTokensMinted);
+    /*
+     * Spend Weth held by this contract on the tokens required by the vault.
+     *
+     * @param  _totalWethAmount   the amount of Weth to spend
+     * @return                    the value of the vaults holdings prior to the deposit
+     */
+    function deposit(uint256 _totalWethAmount) private returns (uint256) {
+        uint256 vaultValuePrior = 0;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            // Swap WETH for a different token which is transferred to the vault
+            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) /
+                100;
+            uint256 numTokensAcquired = swap(wethToSpend, tokenAddresses[i]);
+            // Calculate contribution of token to vault value, which = quantity of token * price of token
+            vaultValuePrior +=
+                (vault.assetQuantities(tokenAddresses[i]) * wethToSpend) /
+                numTokensAcquired;
+            // Deposit holding in vault
+            vault.deposit(tokenAddresses[i], numTokensAcquired);
+        }
+        return vaultValuePrior;
     }
 
-    function swapTokens(address _tokenAddress, uint256 _ethToSwap, address _uniswapProxy) private returns(uint256){
-        // Purchase tokens on Uniswap
-        // Send tokens to vault
-	return 10;
+    // --------------------- Swap tokens --------------------- //
+
+    function swap(uint256 wethAmount, address tokenAddress)
+        private
+        returns (uint256)
+    {
+        uint256 _numTokensAcquired = 0;
+        if (tokenAddress == WETH) {
+            _numTokensAcquired = wethAmount;
+            IERC20(tokenAddress).transfer(address(vault), _numTokensAcquired);
+        } else {
+            // Use UniSwap to get the desired token by sending it WETH
+            _numTokensAcquired = callUniswap(wethAmount, tokenAddress);
+        }
+        return _numTokensAcquired;
     }
 
-    function withdraw() public {
-        address payable to = payable(msg.sender);
-        to.transfer(address(this).balance);
+    function callUniswap(uint256 wethAmount, address tokenToBuy)
+        private
+        returns (uint256)
+    {
+        TransferHelper.safeApprove(WETH, address(uniswapRouter), wethAmount);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: WETH,
+                tokenOut: tokenToBuy,
+                fee: 3000,
+                recipient: address(vault),
+                deadline: block.timestamp,
+                amountIn: wethAmount,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+        uint256 numTokensAcquired = uniswapRouter.exactInputSingle(params);
+        return numTokensAcquired;
     }
 
-    receive() external payable {}
-   
+    function ethToWeth() public payable {
+        (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
+        require(sent, "Failed to swap Eth for Weth");
+    }
+
+    // ----------------------------------- Misc Functions ----------------------------------- //
+
+    function sum(uint256[] memory list) private pure returns (uint256) {
+        uint256 s = 0;
+        for (uint256 i = 0; i < list.length; i++) {
+            s += list[i];
+        }
+        return s;
+    }
+
+    function getBalance(address _tokenAddress, address _address)
+        private
+        view
+        returns (uint256)
+    {
+        return IERC20(_tokenAddress).balanceOf(_address);
+    }
+
+    // -------------------------------------- Modifiers -------------------------------------- //
+
+    modifier onlyOwner() {
+        require(owner == msg.sender);
+        _;
+    }
+
+    modifier nonZeroTotalSupply() {
+        require(
+            totalSupply() > 0,
+            "Total supply is 0.  Contract must be initialised."
+        );
+        _;
+    }
+
+    modifier zeroTotalSupply() {
+        require(
+            totalSupply() == 0,
+            "Total supply is greater than 0 and does not need to be initialised."
+        );
+        _;
+    }
 }
