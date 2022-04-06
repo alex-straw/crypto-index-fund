@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.7;
-import "./Portfolio_v2.sol";
 
-// This contract will be the primary point of contact for the front end of the Dapp
-// It will be permanently deployed and the front end will know its address
-// It should do the following:
-// 1) Provide mechanism for creating contracts
-// 2) Provide mechanism for 'looking up' existing contracts
+import "./Portfolio.sol";
+
+/*
+This contract is for creating and tracking Portfolios
+It is the primary point of contact for the front end of the Dapp
+It does the following:
+1) Provides mechanism for creating contracts
+2) Provides mechanism for 'looking up' existing contracts
+*/
 contract PortfolioFactory {
-    // Portfolio creation event
+    // -------  State ------- //
+    address[] public portfolios;
+
+    // -------  Events ------- //
     event CreatePortfolio(
         address address_,
         string indexed name_,
@@ -20,16 +26,15 @@ contract PortfolioFactory {
         uint256 ownerFee_
     );
 
-    address[] public portfolios;
-
+    // -------  Functions ------- //
     function create(
         string memory name_,
         string memory symbol_,
         address[] memory tokenAddresses_,
         uint256[] memory percentageHoldings_,
         uint256 ownerFee_
-    ) public returns (address) {
-        Portfolio_V2 portfolio = new Portfolio_V2(
+    ) public {
+        Portfolio portfolio = new Portfolio(
             name_,
             symbol_,
             tokenAddresses_,
@@ -47,6 +52,5 @@ contract PortfolioFactory {
             ownerFee_
         );
         portfolios.push(address(portfolio));
-        return address(portfolio);
     }
 }
