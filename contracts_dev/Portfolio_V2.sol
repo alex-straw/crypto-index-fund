@@ -74,35 +74,38 @@ contract Portfolio_V2 is ERC20 {
             _numTokensAcquired = wethAmount;
             IERC20(tokenAddress).transfer(address(vault), _numTokensAcquired);
         } else {
-            // Use UniSwap to get the desired token by sending it WETH
-            _numTokensAcquired = callUniswap(wethAmount, tokenAddress);
+            // swapToken(tokenInAddress, tokenInAmount, tokenOutAddress, recipient))
+            _numTokensAcquired = swapToken(WETH, wethAmount, tokenAddress, address(vault));
         }
         return _numTokensAcquired;
-    }
-
-    function callUniswap(uint256 wethAmount, address tokenToBuy)
-        private
-        returns (uint256)
-    {
-        TransferHelper.safeApprove(WETH, address(uniswapRouter), wethAmount);
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                tokenIn: WETH,
-                tokenOut: tokenToBuy,
-                fee: 3000,
-                recipient: address(vault),
-                deadline: block.timestamp,
-                amountIn: wethAmount,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            });
-        uint256 numTokensAcquired = uniswapRouter.exactInputSingle(params);
-        return numTokensAcquired;
     }
 
     function ethToWeth() public payable {
         (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
         require(sent, "Failed to swap Eth for Weth");
+    }
+
+
+    // ------------------------------ Generalised Token Swap ---------------------------------- //
+
+    function swapToken(address tokenInAddress, uint256 tokenInAmount, address tokenOutAddress, address _recipient)
+        private
+        returns(uint256)
+    {
+        TransferHelper.safeApprove(tokenInAddress, address(uniswapRouter), tokenInAmount);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: tokenInAddress,
+                tokenOut: tokenOutAddress,
+                fee: 3000,
+                recipient: _recipient,
+                deadline: block.timestamp,
+                amountIn: tokenInAmount,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+        uint256 numTokensAcquired = uniswapRouter.exactInputSingle(params);
+        return numTokensAcquired;
     }
 
     // ---------------------------------- Buy / Sell / Deposit ---------------------------------- //
