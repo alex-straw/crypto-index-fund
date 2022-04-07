@@ -161,30 +161,30 @@ contract Portfolio is ERC20 {
             IERC20(tokenAddress).transfer(address(vault), _numTokensAcquired);
         } else {
             // Use UniSwap to get the desired token by sending it WETH
-            _numTokensAcquired = callUniswap(wethAmount, tokenAddress);
+            _numTokensAcquired = callUniswap(WETH, tokenAddress, wethAmount, address(vault));
         }
         return _numTokensAcquired;
     }
 
-    function callUniswap(uint256 wethAmount, address tokenToBuy)
+    function callUniswap(address _tokenIn, address _tokenOut, uint256 _tokenInAmount, address _recipient)
         private
         returns (uint256)
-    {
-        TransferHelper.safeApprove(WETH, address(uniswapRouter), wethAmount);
+     {
+        TransferHelper.safeApprove(_tokenIn, address(uniswapRouter), _tokenInAmount);
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
-                tokenIn: WETH,
-                tokenOut: tokenToBuy,
+                tokenIn: _tokenIn,
+                tokenOut: _tokenOut,
                 fee: 3000,
-                recipient: address(vault),
+                recipient: _recipient,
                 deadline: block.timestamp,
-                amountIn: wethAmount,
+                amountIn: _tokenInAmount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
         uint256 numTokensAcquired = uniswapRouter.exactInputSingle(params);
         return numTokensAcquired;
-    }
+    }   
 
     function ethToWeth() public payable {
         (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
