@@ -8,7 +8,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract Portfolio is ERC20 {
     // -------  State ------- //
-    //Vault public vault;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
     address payable constant WETH = payable(0xd0A1E359811322d97991E03f863a0C30C2cF029C);
@@ -50,7 +49,6 @@ contract Portfolio is ERC20 {
         );
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
-        // vault = new Vault(tokenAddresses_);
         owner = owner_;
         ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
 
@@ -68,7 +66,7 @@ contract Portfolio is ERC20 {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             uint256 _percentageWethAmount = (_totalWethAmount * percentageHoldings[i]) / 100;
             uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
-            // Deposit initial holding in vault
+            // Update assetQuantities to keep track of ERC20s held
             assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
         _mint(owner, 100 * (10**decimals()));
@@ -84,7 +82,8 @@ contract Portfolio is ERC20 {
     function buy() public payable nonZeroTotalSupply {
         // Convert payable amount to Weth
         ethToWeth();
-        // Purchase underlying tokens with Weth and transfer to vault
+        // Buy tokens from uniswap and estimate priorValueLocked: This is 
+        // the value of of the portfolio in terms of ETH prior to this purchase.
         uint256 priorValueLocked = deposit(msg.value);
         /*
         The number of tokens to mint, t, is determined by the formula:
@@ -92,7 +91,7 @@ contract Portfolio is ERC20 {
         where:
         t = tokens to issue
         SUPPLY_b = total supply of tokens before the issuance
-        NAV_b = net asset value (in vault) after the deposits
+        NAV_b = net asset value (in the portfolio) after the deposits
         WETH = amount of Weth deposited for issuance
         */
         uint256 tokensToMint = (totalSupply() * msg.value) / priorValueLocked;
@@ -112,10 +111,9 @@ contract Portfolio is ERC20 {
         uint256 prevSupply = totalSupply();
         _burn(msg.sender, tokensToSell);
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            // How much of the underlying asset is held in the vault
+            // How much of the underlying asset is held in the portfolio
             uint256 assetQuantity = assetQuantities[tokenAddresses[i]];
-            // Withdraw holding from vault
-            // Vault handles the actual ERC20 transfer, since it is the owner of the tokens
+            // Withdraw holding from the portfolio
             uint256 numTokensToWithdraw = (assetQuantity * tokensToSell) / prevSupply;
             assetQuantities[tokenAddresses[i]] -= numTokensToWithdraw;
             IERC20(tokenAddresses[i]).transfer(msg.sender, numTokensToWithdraw);
@@ -123,20 +121,19 @@ contract Portfolio is ERC20 {
     }
 
     /*
-     * Spend Weth held by this contract on the tokens required by the vault.
+     * Spend Weth held by this contract on the tokens required by the portfolio.
      *
      * @param  _totalWethAmount   the amount of Weth to spend
-     * @return                    the value of the vaults holdings prior to the deposit
+     * @return                    the value of the Portfolio's holdings prior to the deposit
      */
     function deposit(uint256 _totalWethAmount) private returns (uint256) {
         uint256 priorValueLocked = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            // Swap WETH for a different token which is transferred to the vault
             uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
             uint256 numTokensAcquired = swap(wethToSpend, tokenAddresses[i]);
-            // Calculate contribution of token to vault value, which = quantity of token * price of token
+            // Calculate contribution of token to Portfolio value, which = quantity of token * price of token
             priorValueLocked += (assetQuantities[tokenAddresses[i]] * wethToSpend) / numTokensAcquired;
-            // Deposit holding in vault
+            // Update portfolio holdings of each asset 
             assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
         return priorValueLocked;
