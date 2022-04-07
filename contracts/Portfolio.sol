@@ -3,21 +3,20 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./Vault.sol";
+//import "./Vault.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract Portfolio is ERC20 {
     // -------  State ------- //
-    Vault public vault;
+    //Vault public vault;
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
-    address payable constant WETH =
-        payable(0xd0A1E359811322d97991E03f863a0C30C2cF029C);
-    ISwapRouter constant uniswapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    address payable constant WETH = payable(0xd0A1E359811322d97991E03f863a0C30C2cF029C);
+    ISwapRouter constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     uint256 public ownerFee;
     address public owner;
+    mapping(address => uint256) public assetQuantities;
 
     // -------  Functions ------- //
     /*
@@ -52,9 +51,13 @@ contract Portfolio is ERC20 {
         );
         tokenAddresses = tokenAddresses_;
         percentageHoldings = percentageHoldings_;
-        vault = new Vault(tokenAddresses_);
+        // vault = new Vault(tokenAddresses_);
         owner = owner_;
         ownerFee = ownerFee_; // Number from 0-10000 (where 10000 represents 100%)
+
+        for (uint256 i=0; i<tokenAddresses.length; i++) {
+            assetQuantities[tokenAddresses[i]] = 0;
+        }
     }
 
     // ---------------------  Initalise Portfolio --------------------- //
@@ -64,12 +67,8 @@ contract Portfolio is ERC20 {
         ethToWeth();
         uint256 _totalWethAmount = getBalance(WETH, address(this));
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            uint256 _percentageWethAmount = (_totalWethAmount *
-                percentageHoldings[i]) / 100;
-            uint256 numTokensAcquired = swap(
-                _percentageWethAmount,
-                tokenAddresses[i]
-            );
+            uint256 _percentageWethAmount = (_totalWethAmount * percentageHoldings[i]) / 100;
+            uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
             // Deposit initial holding in vault
             vault.deposit(tokenAddresses[i], numTokensAcquired);
         }
@@ -149,7 +148,11 @@ contract Portfolio is ERC20 {
         return vaultValuePrior;
     }
 
-    // --------------------- Swap tokens --------------------- //
+    // ---------------------------------------- Vault --------------------------------------- //
+
+
+    // ------------------------------------- Swap tokens ------------------------------------ //
+
 
     function swap(uint256 wethAmount, address tokenAddress)
         private
