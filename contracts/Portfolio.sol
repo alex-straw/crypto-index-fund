@@ -3,7 +3,6 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-//import "./Vault.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
@@ -70,7 +69,7 @@ contract Portfolio is ERC20 {
             uint256 _percentageWethAmount = (_totalWethAmount * percentageHoldings[i]) / 100;
             uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
             // Deposit initial holding in vault
-            vault.deposit(tokenAddresses[i], numTokensAcquired);
+            assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
         _mint(owner, 100 * (10**decimals()));
     }
@@ -86,7 +85,7 @@ contract Portfolio is ERC20 {
         // Convert payable amount to Weth
         ethToWeth();
         // Purchase underlying tokens with Weth and transfer to vault
-        uint256 vaultValuePrior = deposit(msg.value);
+        uint256 priorValueLocked = deposit(msg.value);
         /*
         The number of tokens to mint, t, is determined by the formula:
         t = (SUPPLY_b * WETH) / NAV_b
@@ -96,7 +95,7 @@ contract Portfolio is ERC20 {
         NAV_b = net asset value (in vault) after the deposits
         WETH = amount of Weth deposited for issuance
         */
-        uint256 tokensToMint = (totalSupply() * msg.value) / vaultValuePrior;
+        uint256 tokensToMint = (totalSupply() * msg.value) / priorValueLocked;
         uint256 ownerTokens = (tokensToMint * ownerFee) / 10000;
         _mint(msg.sender, tokensToMint - ownerTokens);
         _mint(owner, ownerTokens);
@@ -114,14 +113,11 @@ contract Portfolio is ERC20 {
         _burn(msg.sender, tokensToSell);
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             // How much of the underlying asset is held in the vault
-            uint256 assetQuantity = vault.assetQuantities(tokenAddresses[i]);
+            uint256 assetQuantity = assetQuantities[tokenAddresses[i]];
             // Withdraw holding from vault
             // Vault handles the actual ERC20 transfer, since it is the owner of the tokens
-            vault.withdraw(
-                tokenAddresses[i],
-                msg.sender,
-                (assetQuantity * tokensToSell) / prevSupply
-            );
+            assetQuantities[tokenAddresses[i]] -= amount;
+            IERC20(tokenAddresses[i]).transfer(msg.sender, (assetQuantity * tokensToSell) / prevSupply);
         }
     }
 
@@ -132,23 +128,18 @@ contract Portfolio is ERC20 {
      * @return                    the value of the vaults holdings prior to the deposit
      */
     function deposit(uint256 _totalWethAmount) private returns (uint256) {
-        uint256 vaultValuePrior = 0;
+        uint256 priorValueLocked = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             // Swap WETH for a different token which is transferred to the vault
-            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) /
-                100;
+            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
             uint256 numTokensAcquired = swap(wethToSpend, tokenAddresses[i]);
             // Calculate contribution of token to vault value, which = quantity of token * price of token
-            vaultValuePrior +=
-                (vault.assetQuantities(tokenAddresses[i]) * wethToSpend) /
-                numTokensAcquired;
+            priorValueLocked += assetQuantities[tokenAddresses[i]) * wethToSpend) / numTokensAcquired;
             // Deposit holding in vault
-            vault.deposit(tokenAddresses[i], numTokensAcquired);
+            assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
-        return vaultValuePrior;
+        return priorValueLocked;
     }
-
-    // ---------------------------------------- Vault --------------------------------------- //
 
 
     // ------------------------------------- Swap tokens ------------------------------------ //
@@ -161,33 +152,33 @@ contract Portfolio is ERC20 {
         uint256 _numTokensAcquired = 0;
         if (tokenAddress == WETH) {
             _numTokensAcquired = wethAmount;
-            IERC20(tokenAddress).transfer(address(vault), _numTokensAcquired);
         } else {
             // Use UniSwap to get the desired token by sending it WETH
-            _numTokensAcquired = callUniswap(wethAmount, tokenAddress);
+            _numTokensAcquired = callUniswap(WETH, tokenAddress, wethAmount, recipient)
         }
         return _numTokensAcquired;
     }
 
-    function callUniswap(uint256 wethAmount, address tokenToBuy)
+    function callUniswap(address _tokenIn, address _tokenOut, uint256 _tokenInAmount, address recipient)
         private
         returns (uint256)
     {
-        TransferHelper.safeApprove(WETH, address(uniswapRouter), wethAmount);
+        TransferHelper.safeApprove(_tokenIn, address(uniswapRouter), _tokenInAmount);
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
-                tokenIn: WETH,
-                tokenOut: tokenToBuy,
+                tokenIn: _tokenIn,
+                tokenOut: _tokenOut,
                 fee: 3000,
-                recipient: address(vault),
+                recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: wethAmount,
+                amountIn: _tokenInAmount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
         uint256 numTokensAcquired = uniswapRouter.exactInputSingle(params);
         return numTokensAcquired;
     }
+
 
     function ethToWeth() public payable {
         (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
