@@ -116,8 +116,9 @@ contract Portfolio is ERC20 {
             uint256 assetQuantity = assetQuantities[tokenAddresses[i]];
             // Withdraw holding from vault
             // Vault handles the actual ERC20 transfer, since it is the owner of the tokens
-            assetQuantities[tokenAddresses[i]] -= amount;
-            IERC20(tokenAddresses[i]).transfer(msg.sender, (assetQuantity * tokensToSell) / prevSupply);
+            uint256 numTokensToWithdraw = (assetQuantity * tokensToSell) / prevSupply;
+            assetQuantities[tokenAddresses[i]] -= numTokensToWithdraw;
+            IERC20(tokenAddresses[i]).transfer(msg.sender, numTokensToWithdraw);
         }
     }
 
@@ -134,7 +135,7 @@ contract Portfolio is ERC20 {
             uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
             uint256 numTokensAcquired = swap(wethToSpend, tokenAddresses[i]);
             // Calculate contribution of token to vault value, which = quantity of token * price of token
-            priorValueLocked += assetQuantities[tokenAddresses[i]) * wethToSpend) / numTokensAcquired;
+            priorValueLocked += (assetQuantities[tokenAddresses[i]] * wethToSpend) / numTokensAcquired;
             // Deposit holding in vault
             assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
@@ -154,12 +155,12 @@ contract Portfolio is ERC20 {
             _numTokensAcquired = wethAmount;
         } else {
             // Use UniSwap to get the desired token by sending it WETH
-            _numTokensAcquired = callUniswap(WETH, tokenAddress, wethAmount, recipient)
+            _numTokensAcquired = callUniswap(WETH, tokenAddress, wethAmount, address(this));
         }
         return _numTokensAcquired;
     }
 
-    function callUniswap(address _tokenIn, address _tokenOut, uint256 _tokenInAmount, address recipient)
+    function callUniswap(address _tokenIn, address _tokenOut, uint256 _tokenInAmount, address _recipient)
         private
         returns (uint256)
     {
@@ -169,7 +170,7 @@ contract Portfolio is ERC20 {
                 tokenIn: _tokenIn,
                 tokenOut: _tokenOut,
                 fee: 3000,
-                recipient: address(this),
+                recipient: _recipient,
                 deadline: block.timestamp,
                 amountIn: _tokenInAmount,
                 amountOutMinimum: 0,
