@@ -19,7 +19,9 @@ What are the benefits of PortFolio?
 
 We use the [Hardhat framework](https://hardhat.org/getting-started/) to compile and test the contracts. 
 
-In order to deploy to the Ethereum test networks, you will need to create a .env file and replace the following variables with your own:
+When you clone the repo, you will need to run `npm install` to get all of the smart contract, Hardhat and testing dependencies.
+
+You will also need to create a .env file and replace the following variables with your own:
 
 ```
 INFURA_API="https://rinkeby.infura.io/v3/<rinkeby_infura_api>"
