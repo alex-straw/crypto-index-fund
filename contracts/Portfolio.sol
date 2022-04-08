@@ -6,15 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-interface IWETH9 {
-
-    function deposit() external payable ;
-    function withdraw(uint wad) external payable;
-    function totalSupply() external returns (uint);  
-    function approve(address guy, uint wad) external returns (bool);
-
-}
-
 contract Portfolio is ERC20 {
     // -------  State ------- //
     address[] public tokenAddresses;
@@ -147,10 +138,6 @@ contract Portfolio is ERC20 {
         IERC20(WETH).transfer(msg.sender, wethAcquired);
     }
 
-    // This function is necessary for WETH -> ETH as the contract will receieve ETH
-    receive() external payable {}
-
-
     /*
      * Spend Weth held by this contract on the tokens required by the portfolio.
      *
@@ -208,7 +195,6 @@ contract Portfolio is ERC20 {
         return numTokensAcquired;
     }
 
-
     function ethToWeth() public payable {
         (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
         require(sent, "Failed to swap Eth for Weth");
@@ -231,6 +217,9 @@ contract Portfolio is ERC20 {
     {
         return IERC20(_tokenAddress).balanceOf(_address);
     }
+
+    // Receive --> Necessary for the contract to transfer WETH to ETH
+    receive() external payable {}
 
     // -------------------------------------- Modifiers -------------------------------------- //
 
