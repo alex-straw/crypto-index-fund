@@ -15,6 +15,18 @@ What are the benefits of PortFolio?
 
 ## Development
 
+### Hardhat
+
+We use the [Hardhat framework](https://hardhat.org/getting-started/) to compile and test the contracts. 
+
+In order to deploy to the Ethereum test networks, you will need to create a .env file and replace the following variables with your own:
+
+```
+INFURA_API="https://rinkeby.infura.io/v3/<rinkeby_infura_api>"
+KOVAN_API="https://kovan.infura.io/v3/<kovan_infura_api>"
+WALLET_PK="<wallet_private_key>"
+```
+
 ### Smart contracts
 
 The contracts folder contains three smart contracts:
