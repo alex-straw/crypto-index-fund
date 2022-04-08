@@ -1,7 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("dotenv").config();
 
-console.log(process.env);
 const RINKEBY_API_KEY = process.env.RINKEBY_API_KEY;
 const KOVAN_API_KEY = process.env.KOVAN_API_KEY;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
