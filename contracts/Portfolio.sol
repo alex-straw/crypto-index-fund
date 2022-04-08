@@ -65,7 +65,7 @@ contract Portfolio is ERC20 {
         uint256 _totalWethAmount = getBalance(WETH, address(this));
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             uint256 _percentageWethAmount = (_totalWethAmount * percentageHoldings[i]) / 100;
-            uint256 numTokensAcquired = swap(_percentageWethAmount, tokenAddresses[i]);
+            uint256 numTokensAcquired = swap(WETH, tokenAddresses[i], _percentageWethAmount, address(this));
             // Update assetQuantities to keep track of ERC20s held
             assetQuantities[tokenAddresses[i]] += numTokensAcquired;
         }
@@ -125,15 +125,17 @@ contract Portfolio is ERC20 {
         // Get total supply before burning tokens
         uint256 prevSupply = totalSupply();
         _burn(msg.sender, tokensToSell);
+        uint256 wethAcquired = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             // How much of the underlying asset is held in the portfolio
             uint256 assetQuantity = assetQuantities[tokenAddresses[i]];
             // Withdraw holding from the portfolio
-            uint256 numTokensToWithdraw = (assetQuantity * tokensToSell) / prevSupply;
-            assetQuantities[tokenAddresses[i]] -= numTokensToWithdraw;
-
-            IERC20(tokenAddresses[i]).transfer(msg.sender, numTokensToWithdraw);
+            uint256 numTokensToWithdraw = (assetQuantity * tokensToSell) / prevSupply;            
+            // Swap all the user's assets to Weth and send to this address
+            // Keep track of the amount of WETH acquired
+            wethAcquired += swap(tokenAddresses[i], WETH, numTokensToWithdraw, address(this));
         }
+        IERC20(WETH).transfer(msg.sender, wethAcquired);
     }
 
     /*
@@ -146,7 +148,7 @@ contract Portfolio is ERC20 {
         uint256 priorValueLocked = 0;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
-            uint256 numTokensAcquired = swap(WETH, tokenAddresses[i], wethToSpend, address(this);
+            uint256 numTokensAcquired = swap(WETH, tokenAddresses[i], wethToSpend, address(this));
             // Calculate contribution of token to Portfolio value, which = quantity of token * price of token
             priorValueLocked += (assetQuantities[tokenAddresses[i]] * wethToSpend) / numTokensAcquired;
             // Update portfolio holdings of each asset 
@@ -164,7 +166,7 @@ contract Portfolio is ERC20 {
         returns (uint256)
     {
         uint256 _numTokensAcquired = 0;
-        if (tokenAddress == WETH) {
+        if (tokenOut == WETH) {
             _numTokensAcquired = tokenInAmount;
         } else {
             // Use UniSwap to get the desired token by sending it WETH
