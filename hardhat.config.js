@@ -9,7 +9,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY;
  * @type import('hardhat/config').HardhatUserConfig
  */
  module.exports = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: "kovan",
   networks: {
     hardhat: {
     },
@@ -29,7 +29,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY;
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 1
       }
     }
   },
