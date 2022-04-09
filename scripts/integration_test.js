@@ -13,7 +13,7 @@ let _ownerFee = 100;
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
 const INITIALISE_AMOUNT = "10000000000" 
 
-describe('MyFirstContract Integration Test', function () {
+describe('Integration test for portfolio', function () {
     before(async function () {
 
         Portfolio = await ethers.getContractFactory('Portfolio');
