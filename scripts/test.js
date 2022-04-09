@@ -73,12 +73,12 @@ async function main() {
   const _portfolioAddress = await portfolioFactory.portfolios(0);  // Get the portfolio address
 
   const Portfolio = await ethers.getContractFactory("Portfolio");
-  const portfolio = await Portfolio.attach(_portfolioAddress);
+  const portfolio = Portfolio.attach(_portfolioAddress);
 
   await portfolio.initialisePortfolio({value: INITIALISE_AMOUNT});  // Initialise the portfolio
   
-  console.log("Portfolio factory address:", await portfolioFactory.address)
-  console.log("Portfolio address: ", await portfolio.address)
+  console.log("Portfolio factory address:", portfolioFactory.address)
+  console.log("Portfolio address: ", portfolio.address)
 
   // ---------------------------- Init Testing ---------------------------- //
 
