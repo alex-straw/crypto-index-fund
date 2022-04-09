@@ -20,4 +20,7 @@ module.exports = {
       accounts: [`${PRIVATE_KEY}`],
     },
   },
+  mocha: {
+    timeout: 40000
+  }
 };
