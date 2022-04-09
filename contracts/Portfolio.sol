@@ -6,6 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
+interface IWETH9 {
+    function deposit() external payable;
+    function transfer(address to, uint value) external returns (bool);
+    function withdraw(uint256 value) external payable;
+}
+
+
 contract Portfolio is ERC20 {
     // -------  State ------- //
     address[] public tokenAddresses;
@@ -61,7 +68,8 @@ contract Portfolio is ERC20 {
 
     function initialisePortfolio() public payable onlyOwner zeroTotalSupply {
         require(msg.value > 0, "Eth required");
-        ethToWeth();
+        //ethToWeth();
+        IWETH9(WETH).deposit{value:msg.value}();
         uint256 _totalWethAmount = getBalance(WETH, address(this));
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             uint256 _percentageWethAmount = (_totalWethAmount * percentageHoldings[i]) / 100;
@@ -81,7 +89,7 @@ contract Portfolio is ERC20 {
      */
     function buy() public payable nonZeroTotalSupply {
         // Convert payable amount to Weth
-        ethToWeth();
+        IWETH9(WETH).deposit{value:msg.value}();
         // Buy tokens from uniswap and estimate priorValueLocked: This is 
         // the value of of the portfolio in terms of ETH prior to this purchase.
         uint256 priorValueLocked = deposit(msg.value);
@@ -135,7 +143,8 @@ contract Portfolio is ERC20 {
             // Keep track of the amount of WETH acquired
             wethAcquired += swap(tokenAddresses[i], WETH, numTokensToWithdraw, address(this));
         }
-        IERC20(WETH).transfer(msg.sender, wethAcquired);
+        IWETH9(WETH).withdraw(wethAcquired);
+        IWETH9(WETH).transfer(payable(msg.sender), wethAcquired);
     }
 
     /*
@@ -195,12 +204,7 @@ contract Portfolio is ERC20 {
         return numTokensAcquired;
     }
 
-    function ethToWeth() public payable {
-        (bool sent, bytes memory data) = WETH.call{value: msg.value}("");
-        require(sent, "Failed to swap Eth for Weth");
-    }
-
-    // ----------------------------------- Misc Functions ----------------------------------- //
+    // -------------------------    ---------- Misc Functions ----------------------------------- //
 
     function sum(uint256[] memory list) private pure returns (uint256) {
         uint256 s = 0;
