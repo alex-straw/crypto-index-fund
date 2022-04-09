@@ -22,8 +22,8 @@ contract Portfolio is ERC20 {
     uint256 public ownerFee;
     address public owner;
     mapping(address => uint256) public assetQuantities;
-
-    // -------  Functions ------- //
+    
+    // --------------------------  Functions  ------------------------- //
     /*
      * Create a new Portfolio token representing a set of underlying assets.
      *
@@ -80,7 +80,8 @@ contract Portfolio is ERC20 {
         _mint(owner, 100 * (10**decimals()));
     }
 
-    // --------------------- Buy / Sell / Deposit --------------------- //
+
+    // -------------------------- Buy & Deposit ----------------------- //
 
     /*
      * Purchase underlying assets with Eth and issue new Portfolio tokens to the buyer.
@@ -109,6 +110,27 @@ contract Portfolio is ERC20 {
     }
 
     /*
+     * Spend Weth held by this contract on the tokens required by the portfolio.
+     *
+     * @param  _totalWethAmount   the amount of Weth to spend
+     * @return                    the value of the Portfolio's holdings prior to the deposit
+     */
+    function deposit(uint256 _totalWethAmount) private returns (uint256) {
+        uint256 priorValueLocked = 0;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
+            uint256 numTokensAcquired = swapIn(WETH, tokenAddresses[i], wethToSpend, address(this));
+            // Calculate contribution of token to Portfolio value, which = quantity of token * price of token
+            priorValueLocked += (assetQuantities[tokenAddresses[i]] * wethToSpend) / numTokensAcquired;
+            // Update portfolio holdings of each asset 
+            assetQuantities[tokenAddresses[i]] += numTokensAcquired;
+        }
+        return priorValueLocked;
+    }
+
+    // -------------------- Sell & Redeem Mechanisms ------------------ //
+
+    /*
      * Sell Portfolio holding and receive underlying assets.
      *
      * @param  tokensToSell   the number of owned tokens to sell
@@ -128,6 +150,12 @@ contract Portfolio is ERC20 {
         }
     }
 
+    /*
+     * Swap Portfolio holdings on Uniswap for Weth.  Swap this Weth for Ether
+     * and transfer to msg.sender.
+     *
+     * @param  tokensToSell   the number of owned tokens to sell
+     */
     function sellAssets(uint256 tokensToSell) public nonZeroTotalSupply {
         require(balanceOf(msg.sender) >= tokensToSell, "Insufficient funds");
         // Get total supply before burning tokens
@@ -139,7 +167,7 @@ contract Portfolio is ERC20 {
             uint256 assetQuantity = assetQuantities[tokenAddresses[i]];
             // Withdraw holding from the portfolio
             uint256 numTokensToWithdraw = (assetQuantity * tokensToSell) / prevSupply;            
-            // Swap all the user's assets to Weth and send to this address
+            // Swap all the user's assets to Weth and send to the contract's address
             // Keep track of the amount of WETH acquired
             assetQuantities[tokenAddresses[i]] -= numTokensToWithdraw;
 
@@ -149,31 +177,13 @@ contract Portfolio is ERC20 {
                 wethAcquired += callUniswap(tokenAddresses[i], WETH, numTokensToWithdraw, address(this));
             }
         }
+        // Swap Weth for ETH by calling the IWETH9 withdraw function.
         IWETH9(WETH).withdraw(wethAcquired);
+        // Transfer all at once to reduce gas fees.
         payable(msg.sender).transfer(wethAcquired);
     }
 
-    /*
-     * Spend Weth held by this contract on the tokens required by the portfolio.
-     *
-     * @param  _totalWethAmount   the amount of Weth to spend
-     * @return                    the value of the Portfolio's holdings prior to the deposit
-     */
-    function deposit(uint256 _totalWethAmount) private returns (uint256) {
-        uint256 priorValueLocked = 0;
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            uint256 wethToSpend = (_totalWethAmount * percentageHoldings[i]) / 100;
-            uint256 numTokensAcquired = swapIn(WETH, tokenAddresses[i], wethToSpend, address(this));
-            // Calculate contribution of token to Portfolio value, which = quantity of token * price of token
-            priorValueLocked += (assetQuantities[tokenAddresses[i]] * wethToSpend) / numTokensAcquired;
-            // Update portfolio holdings of each asset 
-            assetQuantities[tokenAddresses[i]] += numTokensAcquired;
-        }
-        return priorValueLocked;
-    }
-
-
-    // ------------------------------------- Swap tokens ------------------------------------ //
+    // --------------------------- Swap tokens ------------------------ //
 
     function swapIn(address tokenIn, address tokenOut, uint256 tokenInAmount, address recipient)
         private
@@ -209,7 +219,7 @@ contract Portfolio is ERC20 {
         return numTokensAcquired;
     }
 
-    // -------------------------    ---------- Misc Functions ----------------------------------- //
+    // ------------------------- Misc Functions ----------------------- //
 
     function sum(uint256[] memory list) private pure returns (uint256) {
         uint256 s = 0;
@@ -230,7 +240,7 @@ contract Portfolio is ERC20 {
     // Receive --> Necessary for the contract to transfer WETH to ETH
     receive() external payable {}
 
-    // -------------------------------------- Modifiers -------------------------------------- //
+    // --------------------------- Modifiers -------------------------- //
 
     modifier onlyOwner() {
         require(
