@@ -33,8 +33,13 @@ WALLET_PK="<wallet_private_key>"
 
 The contracts folder contains three smart contracts:
 
-1. Portfolio.sol - an ERC20 token representing a portfolio of crypto assets
-2. Vault.sol - a highly secure contract for storing the underlying assets held by the PortFolio
+1. Portfolio.sol - an ERC20 token representing a portfolio of crypto assets/
+    + Allows users to buy into the portfolio
+    + Swaps WETH to allocated proportions of portfolio assets
+    + Stores all assets held by the portfolio (e.g., 50 LINK, 1000 DAI)
+    + Allows users to redeem their share of assets directly 
+    + Alternatively: allows users to sell their assets and receieve ETH
+
 3. PortfolioFactory.sol - a contract used to create new Portfolios and track existing Portfolios
 
 ### Test Portfolios
