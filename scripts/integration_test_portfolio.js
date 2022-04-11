@@ -27,10 +27,9 @@ describe('Integration test for portfolio', function () {
         //await portfolio.initialisePortfolio({value:INITIALISE_AMOUNT});
     });
 
-    it('has a total supply of 0', async function () {
-        let result = await portfolio.totalSupply.call();
-        console.log('total supply: ', result)
-        expect(await result.toString()).to.equal("0");
+    it('Has a total supply of 0', async function () {
+        let supply = await portfolio.totalSupply.call();
+        expect(await supply.toString()).to.equal("0");
     });
 
     describe('Initialisation testing', function () {
@@ -39,10 +38,14 @@ describe('Integration test for portfolio', function () {
         });
 
 
-        it('has a total supply of 1000000000000000', async function () {
-            let result = await portfolio.totalSupply.call();
-            console.log('total supply: ', result)
-            expect(await result.toString()).to.equal("100000000000000000000");
+        it('Has a total supply of 1000000000000000', async function () {
+            let supply = await portfolio.totalSupply.call();
+            expect(await supply.toString()).to.equal("100000000000000000000");
         });
+
+        it('Has correctly assigned owner to the associated hardhat config address', async function () {
+            let owner = await portfolio.owner.call();
+            expect(await owner.toString()).to.equal(OWNER);
+        })
     });
 });
