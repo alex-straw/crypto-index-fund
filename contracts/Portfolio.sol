@@ -14,6 +14,10 @@ interface IWETH9 {
 
 contract Portfolio is ERC20 {
 
+    /*
+     * Events are emitted the three main public functions
+    */
+
     event Buy(
         address indexed _from, 
         uint256 _depositAmount, 
