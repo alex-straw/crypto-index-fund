@@ -21,8 +21,7 @@ async function getAssetQuantities() {
     return currentAssetQuantities
 }
 
-
-describe('Integration test for portfolio', function () {
+describe('DEPLOY', function () {
 
     before(async function () {
 
@@ -40,7 +39,7 @@ describe('Integration test for portfolio', function () {
 
     it('Has a total supply of 0', async function () {
         let supply = await portfolio.totalSupply.call();
-        expect(await supply.toString()).to.equal("0");
+        expect(parseInt(await supply)).to.equal(0);
     });
 
     describe('TEST: Initialise Portfolio', function () {
@@ -50,7 +49,7 @@ describe('Integration test for portfolio', function () {
 
         it('Has a total supply of 1000000000000000', async function () {
             let supply = await portfolio.totalSupply.call();
-            expect(await supply.toString()).to.equal("100000000000000000000");
+            expect(parseInt(await supply)).to.equal(100000000000000000000);
         });
 
         it('Has correctly assigned owner to the associated hardhat config address', async function () {
