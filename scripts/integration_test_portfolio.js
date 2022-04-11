@@ -10,8 +10,9 @@ let _ownerFee = 100;
 
 // Testing variables
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
-const INITIALISE_AMOUNT = "10000000000" 
-const BUY_AMOUNT = "20000000000"
+const INITIALISE_AMOUNT = "1000000" 
+const BUY_AMOUNT = "2000000"
+const TOKENS_TO_SELL = "20000000000000000000"
 
 async function getAssetQuantities() {
     currentAssetQuantities = []
@@ -50,6 +51,7 @@ describe('DEPLOY', function () {
         it('Has a total supply of 1000000000000000', async function () {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(await supply)).to.equal(100000000000000000000);
+            console.log('FOLO total supply: ', supply)
         });
 
         it('Has correctly assigned owner to the associated hardhat config address', async function () {
@@ -69,14 +71,42 @@ describe('DEPLOY', function () {
 
     describe('TEST: Buy', function () {
         it("Has purchased ERC20s from Uniswap after calling 'buy()'", async function() {    
+
             let previousAssetQuantities = await getAssetQuantities();
+
             await portfolio.buy({value:BUY_AMOUNT});
+
             let currentAssetQuantities = await getAssetQuantities();
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(await currentAssetQuantities[i]).to.be.greaterThan(previousAssetQuantities[i]);
-                console.log(_tokenAddresses[i],", Quantity : ", currentAssetQuantities[i])
+                expect(await currentAssetQuantities[i]).to.be.greaterThan(await previousAssetQuantities[i]);
+                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
             }
+        });
+
+        it("Supply of FOLO is greater than '100000000000000000000' (tokens were correctly minted) ", async function() {
+            let supply = await portfolio.totalSupply.call();
+            expect(parseInt(await supply)).to.be.greaterThan(100000000000000000000);
+            console.log('FOLO total supply: ', supply)
+        });
+    });
+
+    describe('TEST: RedeemAssets', function () {
+        it("Has transferred assets correctly to the user and burned FOLO tokens", async function() {    
+
+            let previousAssetQuantities = await getAssetQuantities();
+            let previousSupply = await portfolio.totalSupply.call()
+
+            await portfolio.redeemAssets(TOKENS_TO_SELL);
+
+            let currentAssetQuantities = await getAssetQuantities();
+            let currentSupply = await portfolio.totalSupply.call()
+
+            for (let i = 0; i < _tokenAddresses.length; i++) {
+                expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
+                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
+            }
+            expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
         });
     });
 });
