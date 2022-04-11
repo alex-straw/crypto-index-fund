@@ -10,8 +10,8 @@ let _ownerFee = 100;
 
 // Testing variables
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
-const INITIALISE_AMOUNT = "1000000" 
-const BUY_AMOUNT = "2000000"
+const INITIALISE_AMOUNT = "100000" 
+const BUY_AMOUNT = "200000"
 const TOKENS_TO_SELL = "20000000000000000000"
 
 async function getAssetQuantities() {
@@ -43,7 +43,7 @@ describe('DEPLOY', function () {
         expect(parseInt(await supply)).to.equal(0);
     });
 
-    describe('TEST: Initialise Portfolio', function () {
+    describe('TEST: initialisePortfolio()', function () {
         before(async function () {
             await portfolio.initialisePortfolio({value:INITIALISE_AMOUNT});
         });
@@ -69,7 +69,7 @@ describe('DEPLOY', function () {
         });
     });
 
-    describe('TEST: Buy', function () {
+    describe('TEST: buy()', function () {
         it("Has purchased ERC20s from Uniswap after calling 'buy()'", async function() {    
 
             let previousAssetQuantities = await getAssetQuantities();
@@ -91,7 +91,7 @@ describe('DEPLOY', function () {
         });
     });
 
-    describe('TEST: RedeemAssets', function () {
+    describe('TEST: redeemAssets()', function () {
         it("Has transferred assets correctly to the user and burned FOLO tokens", async function() {    
 
             let previousAssetQuantities = await getAssetQuantities();
@@ -107,6 +107,27 @@ describe('DEPLOY', function () {
                 console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
             }
             expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
+            console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
+        });
+    });
+
+    describe('TEST: sellAssets()', function () {
+        it("Has sold assets correctly, transferred ETH to the user, and burned FOLO tokens", async function() {    
+
+            let previousAssetQuantities = await getAssetQuantities();
+            let previousSupply = await portfolio.totalSupply.call()
+
+            await portfolio.sellAssets(TOKENS_TO_SELL);
+
+            let currentAssetQuantities = await getAssetQuantities();
+            let currentSupply = await portfolio.totalSupply.call()
+
+            for (let i = 0; i < _tokenAddresses.length; i++) {
+                expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
+                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
+            }
+            expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
+            console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
         });
     });
 });
