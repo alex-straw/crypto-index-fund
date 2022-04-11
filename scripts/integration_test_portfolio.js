@@ -64,7 +64,7 @@ describe('DEPLOY', function () {
     
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.greaterThan(0);
-                console.log(_tokenAddresses[i],", Quantity : ", currentAssetQuantities[i])
+                console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
             }
         });
     });
@@ -80,7 +80,7 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.greaterThan(await previousAssetQuantities[i]);
-                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
+                console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
             }
         });
 
@@ -104,7 +104,7 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
+                console.log("Quantity (",_tokenAddresses[i],"): ",await currentAssetQuantities[i])
             }
             expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
             console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
@@ -124,7 +124,7 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                console.log(_tokenAddresses[i],", Quantity : ", await currentAssetQuantities[i])
+                console.log("Quantity (", _tokenAddresses[i],"): ",await currentAssetQuantities[i])
             }
             expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
             console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
