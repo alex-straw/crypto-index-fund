@@ -19,6 +19,7 @@ describe('Portfolio Factory Testing', function () {
         PortfolioFactory = await ethers.getContractFactory('PortfolioFactory');
         portfolioFactory = await PortfolioFactory.deploy();
     })
+    
     beforeEach(async function () {
         await portfolioFactory.create(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee);
     });
