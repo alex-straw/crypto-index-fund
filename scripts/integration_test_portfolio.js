@@ -40,7 +40,7 @@ describe('DEPLOY', function () {
 
     it('Has a total supply of 0', async function () {
         let supply = await portfolio.totalSupply.call();
-        expect(parseInt(await supply)).to.equal(0);
+        expect(parseInt(supply)).to.equal(0);
     });
 
     describe('TEST: initialisePortfolio()', function () {
