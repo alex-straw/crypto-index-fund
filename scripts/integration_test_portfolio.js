@@ -49,7 +49,7 @@ describe('DEPLOY', function () {
             await portfolio.initialisePortfolio({value:INITIALISE_AMOUNT});
         });
 
-        it(`Has a total supply of ${INITIAL_MINT_QTY}`, async function () {
+        it(`Has a total FOLO supply of ${INITIAL_MINT_QTY}`, async function () {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(supply)).to.equal(INITIAL_MINT_QTY);
         });
@@ -81,7 +81,7 @@ describe('DEPLOY', function () {
             }
         });
 
-        it(`Supply of FOLO is greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
+        it(`Has a total FOLO supply greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(supply)).to.be.greaterThan(INITIAL_MINT_QTY);
         });
