@@ -52,7 +52,7 @@ describe('DEPLOY', function () {
         it(`Has a total supply of ${INITIAL_MINT_QTY}`, async function () {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(await supply)).to.equal(INITIAL_MINT_QTY);
-            console.log('FOLO total supply: ', supply)
+            //console.log('FOLO total supply: ', supply)
         });
 
         it('Has correctly assigned owner to the associated hardhat config address', async function () {
@@ -65,7 +65,7 @@ describe('DEPLOY', function () {
     
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.greaterThan(0);
-                console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
+                //console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
             }
         });
     });
@@ -81,14 +81,14 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.greaterThan(await previousAssetQuantities[i]);
-                console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
+                //console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
             }
         });
 
         it(`Supply of FOLO is greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(await supply)).to.be.greaterThan(INITIAL_MINT_QTY);
-            console.log('FOLO total supply: ', supply)
+            //console.log('FOLO total supply: ', supply)
         });
     });
 
@@ -105,10 +105,10 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                console.log("Quantity (",_tokenAddresses[i],"): ",await currentAssetQuantities[i])
+                //console.log("Quantity (",_tokenAddresses[i],"): ",await currentAssetQuantities[i])
             }
             expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
-            console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
+            //console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
         });
     });
 
@@ -125,10 +125,10 @@ describe('DEPLOY', function () {
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                console.log("Quantity (", _tokenAddresses[i],"): ",await currentAssetQuantities[i])
+                //console.log("Quantity (", _tokenAddresses[i],"): ",await currentAssetQuantities[i])
             }
             expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
-            console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
+            //console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
         });
     });
 });
