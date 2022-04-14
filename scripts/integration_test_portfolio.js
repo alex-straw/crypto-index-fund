@@ -10,8 +10,9 @@ let _ownerFee = 100;
 
 // Testing variables
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
-const INITIALISE_AMOUNT = "100000" 
-const BUY_AMOUNT = "200000"
+const INITIALISE_AMOUNT = "100000"
+const INITIAL_MINT_QTY = 100000000000000000000
+const BUY_AMOUNT = "10000"
 const TOKENS_TO_SELL = "20000000000000000000"
 
 async function getAssetQuantities() {
@@ -48,9 +49,9 @@ describe('DEPLOY', function () {
             await portfolio.initialisePortfolio({value:INITIALISE_AMOUNT});
         });
 
-        it('Has a total supply of 1000000000000000', async function () {
+        it(`Has a total supply of ${INITIAL_MINT_QTY}`, async function () {
             let supply = await portfolio.totalSupply.call();
-            expect(parseInt(await supply)).to.equal(100000000000000000000);
+            expect(parseInt(await supply)).to.equal(INITIAL_MINT_QTY);
             console.log('FOLO total supply: ', supply)
         });
 
@@ -84,9 +85,9 @@ describe('DEPLOY', function () {
             }
         });
 
-        it("Supply of FOLO is greater than '100000000000000000000' (tokens were correctly minted) ", async function() {
+        it(`Supply of FOLO is greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
             let supply = await portfolio.totalSupply.call();
-            expect(parseInt(await supply)).to.be.greaterThan(100000000000000000000);
+            expect(parseInt(await supply)).to.be.greaterThan(INITIAL_MINT_QTY);
             console.log('FOLO total supply: ', supply)
         });
     });
