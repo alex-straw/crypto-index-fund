@@ -6,45 +6,34 @@ let _tokenAddresses = ["0xa36085F69e2889c224210F603D836748e7dC0088", "0xd0A1E359
 let _percentageHoldings = [40, 60];
 let _ownerFee = 100;
 
-async function createPortfolio(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee) {
-
-    await portfolioFactory.create(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee);
-}
-
 async function attachPortfolio(_portfolioAddress) {
-    // Create contract instance of 'Portfolio.sol' using address and known code.
+    // Create contract instance of 'Portfolio.sol' using its address and solidity code
     Portfolio = await ethers.getContractFactory("Portfolio");
-    portfolio = await Portfolio.attach(_portfolioAddress);
-
-    return portfolio;
+    _portfolio = await Portfolio.attach(_portfolioAddress);
+    return _portfolio;
 }
 
 describe('Portfolio Factory Testing', function () {
     before(async function () {
-        // Deploy PortfolioFactory.sol
+        // Deploy PortfolioFactory.sol. Only needs to be performed once
         PortfolioFactory = await ethers.getContractFactory('PortfolioFactory');
         portfolioFactory = await PortfolioFactory.deploy();
-
-        await createPortfolio(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee);
-        portfolio = await attachPortfolio(await portfolioFactory.portfolios(0));
-
-        // Log the addresses to the terminal for debugging
-        console.log("Portfolio factory address:", portfolioFactory.address);
-        console.log("Portfolio address: ", portfolio.address);
+    })
+    beforeEach(async function () {
+        await portfolioFactory.create(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee);
     });
 
     it('has successfully deployed a portfolio', async function () {
-        // Verify by calling a portfolio function
+        // Check that the 'portfolios' array has a valid portfolio address in index 0
+        let portfolio = await attachPortfolio(portfolioFactory.portfolios(0));
         let supply = await portfolio.totalSupply.call();
-        console.log('total supply: ', supply)
-        expect(parseInt(await supply)).to.equal(0);
+        expect(parseInt(supply)).to.equal(0);
     });
 
     it('has successfully deployed a second portfolio', async function () {
-        await createPortfolio(_name,_ticker,_tokenAddresses,_percentageHoldings,_ownerFee);
-        portfolio_2 = await attachPortfolio(await portfolioFactory.portfolios(1));
-        let supply = await portfolio_2.totalSupply.call();
-        console.log('total supply: ', supply)
-        expect(parseInt(await supply)).to.equal(0);
+        // Check that the 'portfolios' array has a valid portfolio address in index 1
+        let portfolio2 = await attachPortfolio(portfolioFactory.portfolios(1));
+        let supply = await portfolio2.totalSupply.call();
+        expect(parseInt(supply)).to.equal(0);
     });
 });
