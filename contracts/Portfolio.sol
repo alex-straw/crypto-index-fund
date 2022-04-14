@@ -130,7 +130,7 @@ contract Portfolio is ERC20 {
         _mint(msg.sender, tokensToMint - ownerTokens);
         _mint(owner, ownerTokens);
 
-        emit Buy(msg.sender, msg.value, priorValueLocked, ownerTokens);
+        emit Buy(msg.sender, msg.value, priorValueLocked, tokensToMint - ownerTokens);
     }
 
     /*
