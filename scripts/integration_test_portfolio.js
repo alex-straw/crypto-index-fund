@@ -4,9 +4,9 @@ const { expect } = require('chai');
 let _name = "Portfolio";
 let _ticker = "FOLO";
 let _tokenAddresses = ["0xa36085F69e2889c224210F603D836748e7dC0088", "0xd0A1E359811322d97991E03f863a0C30C2cF029C"];
-let _percentageHoldings = [40, 60];
+let _percentageHoldings = [50, 50];
 let _owner = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
-let _ownerFee = 100;
+let _ownerFee = 10;
 
 // Testing variables
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
@@ -51,21 +51,18 @@ describe('DEPLOY', function () {
 
         it(`Has a total supply of ${INITIAL_MINT_QTY}`, async function () {
             let supply = await portfolio.totalSupply.call();
-            expect(parseInt(await supply)).to.equal(INITIAL_MINT_QTY);
-            //console.log('FOLO total supply: ', supply)
+            expect(parseInt(supply)).to.equal(INITIAL_MINT_QTY);
         });
 
         it('Has correctly assigned owner to the associated hardhat config address', async function () {
             let owner = await portfolio.owner.call();
-            expect(await owner.toString()).to.equal(OWNER);
+            expect(owner.toString()).to.equal(OWNER);
         })
 
-        it("Has purchased ERC20s from Uniswap after calling 'initialisePortfolio()'", async function() {     
-            let AssetQuantities = await getAssetQuantities()
-    
+        it("Has purchased ERC20s from Uniswap after calling 'initialisePortfolio()'", async function() {        
+            let currentAssetQuantities = await getAssetQuantities(); 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(await currentAssetQuantities[i]).to.be.greaterThan(0);
-                //console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
+                expect(currentAssetQuantities[i]).to.be.greaterThan(0);
             }
         });
     });
@@ -80,15 +77,13 @@ describe('DEPLOY', function () {
             let currentAssetQuantities = await getAssetQuantities();
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(await currentAssetQuantities[i]).to.be.greaterThan(await previousAssetQuantities[i]);
-                //console.log("Quantity (",_tokenAddresses[i],"): ", currentAssetQuantities[i])
+                expect(currentAssetQuantities[i]).to.be.greaterThan(previousAssetQuantities[i]);
             }
         });
 
         it(`Supply of FOLO is greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
             let supply = await portfolio.totalSupply.call();
-            expect(parseInt(await supply)).to.be.greaterThan(INITIAL_MINT_QTY);
-            //console.log('FOLO total supply: ', supply)
+            expect(parseInt(supply)).to.be.greaterThan(INITIAL_MINT_QTY);
         });
     });
 
@@ -104,11 +99,9 @@ describe('DEPLOY', function () {
             let currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                //console.log("Quantity (",_tokenAddresses[i],"): ",await currentAssetQuantities[i])
+                expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
             }
-            expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
-            //console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
+            expect(parseInt(currentSupply)).to.equal((parseInt(previousSupply))-TOKENS_TO_SELL)
         });
     });
 
@@ -124,11 +117,9 @@ describe('DEPLOY', function () {
             let currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(await currentAssetQuantities[i]).to.be.lessThan(await previousAssetQuantities[i]);
-                //console.log("Quantity (", _tokenAddresses[i],"): ",await currentAssetQuantities[i])
+                expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
             }
-            expect(parseInt(await currentSupply)).to.equal((parseInt(await previousSupply))-TOKENS_TO_SELL)
-            //console.log('Old supply: ', await previousSupply, '. New Supply: ', await currentSupply)
+            expect(parseInt(currentSupply)).to.equal((parseInt(previousSupply))-TOKENS_TO_SELL)
         });
     });
 });
