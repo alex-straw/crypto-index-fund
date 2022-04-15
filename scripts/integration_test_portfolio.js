@@ -86,7 +86,7 @@ describe('DEPLOY', function () {
             }
         });
 
-        it(`Has a total FOLO supply greater than ${INITIAL_MINT_QTY} (tokens were correctly minted)`, async function() {
+        it(`Has a total FOLO supply greater than ${INITIAL_MINT_QTY} (tokens were minted)`, async function() {
             let supply = await portfolio.totalSupply.call();
             expect(parseInt(supply)).to.be.greaterThan(INITIAL_MINT_QTY);
         });
@@ -105,31 +105,43 @@ describe('DEPLOY', function () {
                 // (msg.sender, tokensToSell)
         });
 
-        it("Has transferred assets correctly to the user and burned FOLO tokens", async function() {    
-            let currentAssetQuantities = await getAssetQuantities();
-            let currentSupply = await portfolio.totalSupply.call()
+        it("Has transferred assets correctly", async function() {    
+            currentAssetQuantities = await getAssetQuantities();
+            currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
             }
+        });
+
+        it(`Has decreased the FOLO supply by: ${TOKENS_TO_SELL} (tokens were burned)`, async function() {
             expect(parseInt(currentSupply)).to.equal((parseInt(previousSupply))-TOKENS_TO_SELL)
         });
     });
 
     describe('TEST: sellAssets()', function () {
+        
+        before(async function () {
+            previousAssetQuantities = await getAssetQuantities();
+            previousSupply = await portfolio.totalSupply.call()
+        })
+
+        it("Has emitted an event after calling 'sellAssets()'", async function() {
+            await expect(portfolio.sellAssets(TOKENS_TO_SELL))
+                .to.emit(portfolio, 'SellAssets');
+                // (msg.sender, tokensToSell, wethAcquired)
+        });
+
         it("Has sold assets correctly, transferred ETH to the user, and burned FOLO tokens", async function() {    
-
-            let previousAssetQuantities = await getAssetQuantities();
-            let previousSupply = await portfolio.totalSupply.call()
-
-            await portfolio.sellAssets(TOKENS_TO_SELL);
-
-            let currentAssetQuantities = await getAssetQuantities();
-            let currentSupply = await portfolio.totalSupply.call()
+            currentAssetQuantities = await getAssetQuantities();
+            currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
             }
+        });
+        
+        it(`Has decreased the FOLO supply by: ${TOKENS_TO_SELL} (tokens were burned)`, async function() {
             expect(parseInt(currentSupply)).to.equal((parseInt(previousSupply))-TOKENS_TO_SELL)
         });
     });
