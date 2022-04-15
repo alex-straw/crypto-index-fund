@@ -12,7 +12,7 @@ let _ownerFee = 10;
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
 const INITIALISE_AMOUNT = "100000"
 const INITIAL_MINT_QTY = 100000000000000000000
-const BUY_AMOUNT = "1000"
+const BUY_AMOUNT = "10000"
 const TOKENS_TO_SELL = "5000000000000000000"
 
 async function getAssetQuantities() {
@@ -93,13 +93,19 @@ describe('DEPLOY', function () {
     });
 
     describe('TEST: redeemAssets()', function () {
+
+        before(async function () {
+            previousAssetQuantities = await getAssetQuantities();
+            previousSupply = await portfolio.totalSupply.call()
+        })
+
+        it("Has emitted an event after calling 'redeemAssets()'", async function() {
+            await expect(portfolio.redeemAssets(TOKENS_TO_SELL))
+                .to.emit(portfolio, 'RedeemAssets');
+                // (msg.sender, tokensToSell)
+        });
+
         it("Has transferred assets correctly to the user and burned FOLO tokens", async function() {    
-
-            let previousAssetQuantities = await getAssetQuantities();
-            let previousSupply = await portfolio.totalSupply.call()
-
-            await portfolio.redeemAssets(TOKENS_TO_SELL);
-
             let currentAssetQuantities = await getAssetQuantities();
             let currentSupply = await portfolio.totalSupply.call()
 
