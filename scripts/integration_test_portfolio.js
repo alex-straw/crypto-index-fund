@@ -12,8 +12,8 @@ let _ownerFee = 10;
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
 const INITIALISE_AMOUNT = "100000"
 const INITIAL_MINT_QTY = 100000000000000000000
-const BUY_AMOUNT = "10000"
-const TOKENS_TO_SELL = "20000000000000000000"
+const BUY_AMOUNT = "1000"
+const TOKENS_TO_SELL = "5000000000000000000"
 
 async function getAssetQuantities() {
     currentAssetQuantities = []
@@ -68,14 +68,19 @@ describe('DEPLOY', function () {
     });
 
     describe('TEST: buy()', function () {
+
+        before(async function() {
+            previousAssetQuantities = await getAssetQuantities();
+        })
+
+        it("Has emitted an event after calling 'buy()'", async function() {
+            await expect(portfolio.buy({value:BUY_AMOUNT}))
+                .to.emit(portfolio, 'Buy');
+                // (msg.sender, msg.value, priorValueLocked, tokensToMint - ownerTokens)
+        });
+
         it("Has purchased ERC20s from Uniswap after calling 'buy()'", async function() {    
-
-            let previousAssetQuantities = await getAssetQuantities();
-
-            await portfolio.buy({value:BUY_AMOUNT});
-
             let currentAssetQuantities = await getAssetQuantities();
-
             for (let i = 0; i < _tokenAddresses.length; i++) {
                 expect(currentAssetQuantities[i]).to.be.greaterThan(previousAssetQuantities[i]);
             }
