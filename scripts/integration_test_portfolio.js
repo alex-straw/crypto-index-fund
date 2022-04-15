@@ -12,7 +12,7 @@ let _ownerFee = 10;
 const OWNER = "0xF1C37BC188643DF4Bf15Fd437096Eb654d30abc1"
 const INITIALISE_AMOUNT = "100000"
 const INITIAL_MINT_QTY = 100000000000000000000
-const BUY_AMOUNT = "10000"
+const BUY_AMOUNT = "34000"
 const TOKENS_TO_SELL = "5000000000000000000"
 
 async function getAssetQuantities() {
@@ -97,7 +97,12 @@ describe('DEPLOY', function () {
         before(async function () {
             previousAssetQuantities = await getAssetQuantities();
             previousSupply = await portfolio.totalSupply.call()
-        })
+            
+            expectedNewQuantities = []
+            for (let i = 0; i < previousAssetQuantities.length; i++) {
+                expectedNewQuantities.push(previousAssetQuantities[i]-Math.floor(previousAssetQuantities[i] * TOKENS_TO_SELL / previousSupply))
+            };
+        });
 
         it("Has emitted an event after calling 'redeemAssets()'", async function() {
             await expect(portfolio.redeemAssets(TOKENS_TO_SELL))
@@ -105,12 +110,12 @@ describe('DEPLOY', function () {
                 // (msg.sender, tokensToSell)
         });
 
-        it("Has transferred assets correctly", async function() {    
+        it("Has transferred the expected quantities of each asset to the sender", async function() {    
             currentAssetQuantities = await getAssetQuantities();
             currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
+                expect(currentAssetQuantities[i]).to.equal(expectedNewQuantities[i]);
             }
         });
 
@@ -124,6 +129,11 @@ describe('DEPLOY', function () {
         before(async function () {
             previousAssetQuantities = await getAssetQuantities();
             previousSupply = await portfolio.totalSupply.call()
+
+            expectedNewQuantities = []
+            for (let i = 0; i < previousAssetQuantities.length; i++) {
+                expectedNewQuantities.push(previousAssetQuantities[i]-Math.floor(previousAssetQuantities[i] * TOKENS_TO_SELL / previousSupply))
+            };
         })
 
         it("Has emitted an event after calling 'sellAssets()'", async function() {
@@ -137,7 +147,7 @@ describe('DEPLOY', function () {
             currentSupply = await portfolio.totalSupply.call()
 
             for (let i = 0; i < _tokenAddresses.length; i++) {
-                expect(currentAssetQuantities[i]).to.be.lessThan(previousAssetQuantities[i]);
+                expect(currentAssetQuantities[i]).to.equal(expectedNewQuantities[i]);
             }
         });
         
