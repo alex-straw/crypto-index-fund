@@ -12,8 +12,30 @@ interface IWETH9 {
     function withdraw(uint256 value) external payable;
 }
 
-
 contract Portfolio is ERC20 {
+
+    /*
+     * Events are emitted the three main public functions
+    */
+
+    event Buy(
+        address indexed _from, 
+        uint256 _depositAmount, 
+        uint256 _priorValueLocked,
+        uint256 _tokensMinted
+    );
+
+    event RedeemAssets(
+        address indexed _from, 
+        uint256 _tokensBurned
+    );
+
+    event SellAssets(
+        address indexed _from,
+        uint256 _tokensBurned, 
+        uint256 returnedEth
+    );
+
     // -------  State ------- //
     address[] public tokenAddresses;
     uint256[] public percentageHoldings;
@@ -107,6 +129,8 @@ contract Portfolio is ERC20 {
         uint256 ownerTokens = (tokensToMint * ownerFee) / 10000;
         _mint(msg.sender, tokensToMint - ownerTokens);
         _mint(owner, ownerTokens);
+
+        emit Buy(msg.sender, msg.value, priorValueLocked, tokensToMint - ownerTokens);
     }
 
     /*
@@ -148,6 +172,7 @@ contract Portfolio is ERC20 {
             assetQuantities[tokenAddresses[i]] -= numTokensToWithdraw;
             IERC20(tokenAddresses[i]).transfer(msg.sender, numTokensToWithdraw);
         }
+        emit RedeemAssets(msg.sender, tokensToSell);
     }
 
     /*
@@ -181,6 +206,8 @@ contract Portfolio is ERC20 {
         IWETH9(WETH).withdraw(wethAcquired);
         // Transfer all at once to reduce gas fees.
         payable(msg.sender).transfer(wethAcquired);
+
+        emit SellAssets(msg.sender, tokensToSell, wethAcquired);
     }
 
     // --------------------------- Swap tokens ------------------------ //

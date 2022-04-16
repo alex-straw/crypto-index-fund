@@ -29,6 +29,18 @@ KOVAN_API="https://kovan.infura.io/v3/<kovan_infura_api>"
 WALLET_PK="<wallet_private_key>"
 ```
 
+Testing:
+1. scripts/integration_test_portfolio_factory.js
+    - Verifies that the portfolio factory is functioning as expected.  Deploys two portfolio instances and verifies that these are working.
+2. scripts/integration_test_portfolio.js
+    - Monitors the minting, and burning of the portfolio ERC20 token, and ensures that assets are bought, sold, and transferred correctly.
+    - Tests key functionality of the portfolio contract, including:
+        - Initial dployment
+        - function: initialisePortfolio()
+        - function: buy()
+        - function: redeemAssets()
+        - function: sellAssets()
+
 ### Smart contracts
 
 The contracts folder contains three smart contracts:
